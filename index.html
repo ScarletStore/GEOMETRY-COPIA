@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Yuri 22 Dash Pro Mod v2.2 - By Dino.Editxx (Boss Update)</title> {/* Versão Atualizada */}
+    <title>Yuri 22 Dash Pro - By Dino.Editxx</title> {/* Título Simplificado */}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -227,6 +227,38 @@
             font-size: clamp(10px, 1.8vw, 14px);
             color: #FF4500; /* Laranja avermelhado */
         }
+        /* NOVO: Barra de Vida do Boss */
+        #bossHealthBarContainer {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: clamp(150px, 40vw, 300px);
+            height: 20px;
+            background-color: rgba(80, 80, 80, 0.8);
+            border: 2px solid #FF4500;
+            border-radius: 5px;
+            display: none; /* Começa escondido */
+            z-index: 6;
+        }
+        #bossHealthBar {
+            height: 100%;
+            width: 100%; /* Controlado por JS */
+            background: linear-gradient(to right, #ff0000, #ff4500, #ff8c00);
+            border-radius: 3px;
+            transition: width 0.3s ease-out;
+        }
+        #bossHealthText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(9px, 1.8vw, 12px);
+            color: #fff;
+            text-shadow: 1px 1px 1px #000;
+            white-space: nowrap;
+        }
+
 
         #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: center; font-size: clamp(24px, 5vw, 40px); color: #FFA000; z-index: 15; text-align: center; flex-direction: column; }
         #levelUpDisplay { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); font-size: clamp(20px, 4vw, 32px); color: lime; text-shadow: 2px 2px 5px black; opacity: 0; transition: opacity 0.5s ease-out, transform 0.3s ease-out; /* Adicionado transform transition */ z-index: 16; pointer-events: none; }
@@ -268,6 +300,7 @@
          #instructionsContent li { margin-bottom: 8px; }
          #instructionsContent strong { color: #00ffff; } /* Destaca teclas e ações */
          #instructionsContent .new-feature { color: #ffeb3b; font-weight: bold; } /* Destaca novidades */
+         #instructionsContent .boss-feature { color: #ff8c00; font-weight: bold; } /* Destaca novidades do Boss */
         #instructionsPanel button {
             font-family: 'Press Start 2P', cursive;
             font-size: clamp(12px, 2vw, 15px);
@@ -463,9 +496,14 @@
         <div id="scoreDisplay" class="ui-element">Score: 0</div>
         <div id="levelDisplay" class="ui-element">Nível: 1</div>
         <div id="livesDisplay" class="ui-element">Vidas: 1</div> {/* Mostra 1 (Revive) */}
-        <div id="timerDisplay" class="ui-element">Tempo: 3:00</div>
+        <div id="timerDisplay" class="ui-element">Tempo: 0:00</div> {/* Começa em 0 */}
         {/* Reutilizado para Spawn e Respawn do Boss */}
         <div id="bossCountdown" class="ui-element">Boss em: 50s</div>
+        {/* NOVO: Barra de Vida do Boss */}
+        <div id="bossHealthBarContainer">
+            <div id="bossHealthBar"></div>
+            <div id="bossHealthText">BOSS</div>
+        </div>
 
         <div id="profileArea">
             <div id="profilePic"></div>
@@ -488,16 +526,24 @@
                     <li><strong>Mobile:</strong> Toque na tela para pular (toque novamente no ar para pulo duplo).</li>
                     <li>Desvie dos obstáculos (espinhos <strong style="color: #ff4d4d;">vermelhos</strong>, blocos <strong style="color: #c8c8dc;">cinzas</strong>, círculos <strong style="color: #32c832;">verdes</strong>, etc.).</li>
                     <li>Colidir <strong>após reviver</strong> é Game Over! Você tem <strong>1 chance</strong> de reviver.</li>
-                    <li>Sobreviva o máximo que puder! (Não há mais limite de 3 minutos para vencer).</li>
+                    <li>Sobreviva o máximo que puder! (Não há mais limite de tempo para vencer).</li>
                     <li><span class="new-feature">O primeiro <strong>Boss</strong> aparece após <strong>50 segundos</strong>.</span></li>
                     <li><span class="new-feature">Após derrotar um Boss, um <strong>novo Boss mais forte</strong> aparece a cada <strong>20 segundos</strong>.</span></li>
-                    <li>Contra o Boss, a chance de reviver ainda se aplica. Ser atingido por um projétil usa a chance ou causa Game Over. <span class="new-feature">Os projéteis são objetos (quadrados, triângulos, círculos) e precisam acertar você precisamente.</span></li>
+                    <li>Contra o Boss:
+                        <ul>
+                            <li>A chance de reviver ainda se aplica. Ser atingido por um projétil usa a chance ou causa Game Over.</li>
+                            <li><span class="boss-feature">O Boss mostrará um <strong>AVISO (círculo vermelho)</strong> onde o ataque vai ocorrer!</span></li>
+                            <li><span class="boss-feature">Os projéteis agora parecem <strong>bolas de fogo</strong>.</span></li>
+                            <li><span class="boss-feature">A <strong>barra de vida</strong> do Boss aparece na parte inferior.</span></li>
+                            <li><span class="boss-feature">Bosses de nível mais alto têm <strong>mais vida</strong>.</span></li>
+                        </ul>
+                     </li>
                     <li><strong>Habilidades (Botão <i data-lucide="zap" style="width:1em; height:1em; vertical-align:middle;"></i>):</strong>
                         <ul>
-                            <li><strong>Nível 3:</strong> Libera <strong>"Esquiva Rápida"</strong> (teleporte curto para frente). Use quando o Boss <strong>NÃO</strong> estiver ativo.</li>
+                            <li><strong>Nível 3:</strong> Libera <strong>"Esquiva Rápida"</strong> (teleporte curto para frente).</li>
                             <li><strong>Nível 6:</strong> A habilidade se torna <strong>"Tiro Certeiro"</strong>. Use <strong>somente</strong> quando o Boss estiver ativo.</li>
-                             <li>A habilidade tem um <strong>cooldown</strong> (tempo de recarga).</li>
-                             <li>Para "Tiro Certeiro": <span class="new-feature"><strong>Clique 3 vezes</strong> no botão rapidamente para matar o boss instantaneamente!</span></li>
+                            <li>A habilidade tem um <strong>cooldown</strong> (tempo de recarga).</li>
+                            <li>Para "Tiro Certeiro": <span class="new-feature"><strong>Clique 3 vezes</strong> no botão rapidamente para derrotar o boss!</span></li>
                         </ul>
                     </li>
                     <li><strong>Pausa:</strong> Use <strong>'P'</strong> no PC ou o botão 'Pausar'/'Continuar'.</li>
@@ -531,7 +577,7 @@
 
     <script>
         // --- Variáveis Globais ---
-        let gameState = "loading"; // Estados: loading, nickname, menu, play, paused, gameover, win (win não é mais usado para tempo)
+        let gameState = "loading"; // Estados: loading, nickname, menu, play, paused, gameover
         let player;
         let obstacles = [];
         let playerParticles = []; // Partículas do jogador
@@ -539,7 +585,7 @@
         let score = 0;
         let currentLevel = 1;
         let highestLevelReached = 1; // Nível mais alto salvo
-        const levelScoreThresholds = [null, 0, 5, 15, 30, 50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000]; // Score para subir de nível (Adicionado mais níveis)
+        const levelScoreThresholds = [null, 0, 5, 15, 30, 50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000]; // Score para subir de nível
         let groundMargin = 100; // Valor inicial, será recalculado
 
         // Elementos HTML
@@ -554,10 +600,10 @@
         let particleColorSelector;
         let profileArea, profilePic, profileNicknameDisplay, profileLevelDisplay, profileSettingsIcon; // NOVOS Elementos Profile
         let footerCopyright; // Elemento do copyright no rodapé
+        let bossHealthBarContainer, bossHealthBar, bossHealthText; // NOVO: Elementos Barra Vida Boss
 
         // Botões p5.js (serão criados/removidos dinamicamente)
-        let playButtonP5, instructionsButtonP5, gameOverMenuButtonP5, gameOverRestartButtonP5; // Removido botões de Win
-        // let winMenuButtonP5, winRestartButtonP5; // Removido
+        let playButtonP5, instructionsButtonP5, gameOverMenuButtonP5, gameOverRestartButtonP5;
 
         // Skins (Verifique se estas URLs estão corretas e acessíveis!)
         const playerSkins = {
@@ -583,18 +629,17 @@
         let menuBgImg;
         let bossImg; // Imagem do *inimigo* Boss
 
-        // Timer (Agora conta o tempo sobrevivido, sem limite para 'win')
+        // Timer
         let gameTimer = 0; // Começa em 0
         let gameStartTime = 0;
-        // const MAX_GAME_TIME = 180; // Removido limite
 
         // Boss Inimigo
         let boss = null;
         const BOSS_APPEAR_TIME = 50; // Tempo para o PRIMEIRO boss aparecer (segundos)
-        const BOSS_MAX_HEALTH = 1; // Vida do boss (para habilidade de matar)
         let bossLevel = 1; // Nível do Boss atual (para dificuldade)
         let bossRespawnTimer = -1; // Timer para respawn após derrota (-1 = inativo)
         const BOSS_RESPAWN_INTERVAL = 20 * 60; // 20 segundos em frames (a 60fps)
+        const BOSS_ATTACK_WARNING_DURATION = 45; // Duração do aviso em frames (0.75s a 60fps)
 
         // Nickname
         let playerNickname = "Convidado";
@@ -697,15 +742,15 @@
 
             // Espera fontes e finaliza setup
             document.fonts.ready.then(() => {
-                 console.log("Setup: Fontes prontas!");
-                 // Inicializa Lucide Ícones aqui se ainda não tiverem sido
-                 if (typeof lucide !== 'undefined' && !window.lucideIconsInitialized) {
-                     try { lucide.createIcons(); window.lucideIconsInitialized = true; } catch(e) { console.warn("Erro ao inicializar ícones Lucide na fonte pronta:", e); }
-                 }
+                console.log("Setup: Fontes prontas!");
+                // Inicializa Lucide Ícones aqui se ainda não tiverem sido
+                if (typeof lucide !== 'undefined' && !window.lucideIconsInitialized) {
+                    try { lucide.createIcons(); window.lucideIconsInitialized = true; } catch(e) { console.warn("Erro ao inicializar ícones Lucide na fonte pronta:", e); }
+                }
                 finishSetup();
             }).catch(error => {
-                 console.error("Setup: Erro ao esperar fontes, usando fallback timeout:", error);
-                 setTimeout(finishSetup, 1500);
+                console.error("Setup: Erro ao esperar fontes, usando fallback timeout:", error);
+                setTimeout(finishSetup, 1500);
             });
         }
 
@@ -787,7 +832,7 @@
                 // --- Efeito de Shake (Reviver) ---
                 push(); // Isola o shake
                 if(reviveShakeTimer > 0) {
-                    translate(random(-5, 5), random(-4, 4));
+                    translate(random(-6, 6), random(-5, 5)); // Aumenta intensidade do shake
                     reviveShakeTimer--;
                 }
                  // --- Efeito de Luz Branca (Reviver) ---
@@ -831,9 +876,6 @@
                     case "gameover":
                         showGameOverScreen();
                         break;
-                    // case "win": // Estado Win removido
-                    //    showWinScreen();
-                    //    break;
                 }
 
                 // Desenha partículas do jogador (em todos os estados exceto loading/nickname)
@@ -874,11 +916,24 @@
                     }
                  }
 
+                 // NOVO: Desenha Aviso e Projéteis do Boss (Dentro do push/pop do zoom)
+                 if (boss && (gameState === 'play' || gameState === 'paused')) { // Desenha parado se pausado
+                     boss.drawProjectilesAndWarning();
+                 }
+
+
                 pop(); // Restaura transformações de câmera/zoom
                 pop(); // Restaura transformações do shake
 
                 // --- UI desenhada DEPOIS do pop(), para não ser afetada pelo zoom/shake ---
                 // Os elementos UI (score, level etc) são HTML, não precisam ser redesenhados aqui.
+                // NOVO: Atualiza Barra de Vida do Boss (HTML)
+                if (boss && (gameState === 'play' || gameState === 'paused')) {
+                    updateBossHealthBar();
+                } else if (bossHealthBarContainer && bossHealthBarContainer.style.display !== 'none') {
+                    bossHealthBarContainer.style.display = 'none'; // Esconde se não houver boss ou não estiver jogando/pausado
+                }
+
 
                 // Atualiza cooldown da habilidade (se não estiver pausado)
                 if (gameState === 'play' && abilityCooldownTimer > 0) {
@@ -938,7 +993,7 @@
         function startGame() {
             console.log("startGame: Iniciando...");
              // Permite iniciar do gameover também (via botão Reiniciar)
-             if (!assetsReady || !['menu', 'nickname', 'gameover'].includes(gameState)) { // Removido 'win'
+             if (!assetsReady || !['menu', 'nickname', 'gameover'].includes(gameState)) {
                  console.warn("startGame: Chamada ignorada (estado/assets inválidos). Estado atual:", gameState);
                  return;
              }
@@ -987,6 +1042,7 @@
                  if (instructionsPanel) instructionsPanel.style.display = 'none';
                  if (nicknameArea) nicknameArea.style.display = 'none';
                  if (particleColorSelector) particleColorSelector.style.display = "none";
+                 if (bossHealthBarContainer) bossHealthBarContainer.style.display = 'none'; // Esconde barra de vida
 
                  console.log("startGame: Preparação concluída, mudando para 'play'");
                  changeState("play");
@@ -1056,7 +1112,8 @@
                     boss = new Boss(bossImg, bossLevel); // Cria Boss nível 1
                     killAbilityClicks = 0;
                     updateBossCountdownDisplay(-1); // Esconde countdown
-                     updateAbilityButton(); // Habilita o botão de habilidade se o nível permitir
+                    updateAbilityButton(); // Habilita o botão de habilidade se o nível permitir
+                    if (bossHealthBarContainer) bossHealthBarContainer.style.display = 'block'; // MOSTRA barra de vida
                 }
                 // 2. Countdown para o PRIMEIRO Boss (antes dele aparecer)
                 else if (!boss && bossLevel === 1 && bossRespawnTimer <= 0 && bossInitialSpawnRemaining > 0) {
@@ -1075,16 +1132,17 @@
                         boss = new Boss(bossImg, bossLevel); // Cria novo Boss com nível atual
                         killAbilityClicks = 0;
                         updateBossCountdownDisplay(-1); // Esconde countdown
-                         updateAbilityButton();
+                        updateAbilityButton();
+                        if (bossHealthBarContainer) bossHealthBarContainer.style.display = 'block'; // MOSTRA barra de vida
                     }
                 }
                 // 4. Atualização do Boss quando ATIVO
                 else if (boss) {
                     boss.update(player);
-                    boss.show();
+                    boss.show(); // Desenha o corpo do boss
 
-                    // Checa colisão dos projéteis do boss com o player
-                     for (let i = boss.projectiles.length - 1; i >= 0; i--) { // Mudou para boss.projectiles
+                    // Checa colisão dos projéteis do boss com o player (agora são desenhados separadamente)
+                     for (let i = boss.projectiles.length - 1; i >= 0; i--) {
                          let p = boss.projectiles[i];
                          if (p.hits(player)) {
                              console.log("runGameScreen: Colisão com projétil do Boss!");
@@ -1103,16 +1161,27 @@
                         showMessage(`Chefe Nv.${bossLevel} Derrotado! Próximo em 20s`, 180);
                         score += 50 * bossLevel; // Bonus maior por bosses mais difíceis
                         updateScoreDisplay();
+
+                        // Efeito simples de partículas na derrota
+                        let defeatX = boss.x;
+                        let defeatY = boss.y;
+                        for(let i = 0; i < 30; i++) {
+                             let angle = random(TWO_PI);
+                             let speed = random(3, 8);
+                             playerParticles.push(new PlayerParticle(defeatX, defeatY, cos(angle)*speed, sin(angle)*speed, 60, [255, 69, 0])); // Laranja/Vermelho
+                        }
+
                         bossLevel++; // Incrementa nível para o próximo boss
                         bossRespawnTimer = BOSS_RESPAWN_INTERVAL; // Inicia timer para o próximo
                         boss = null; // Remove o boss atual
-                        // Poderia adicionar uma animação de explosão aqui
-                        updateAbilityButton(); // Desativa botão de habilidade (pois boss sumiu)
+                        if (bossHealthBarContainer) bossHealthBarContainer.style.display = 'none'; // ESCONDE barra de vida
+
+                        updateAbilityButton(); // Atualiza estado botão (deve ficar inapropriado ou esquiva)
                         updateBossCountdownDisplay(ceil(bossRespawnTimer / 60), "Próximo em"); // Mostra countdown inicial pro próximo
                     }
                 }
                 // Garante que o countdown está escondido se o boss estiver ativo
-                else if (boss && bossCountdownDisplay) {
+                else if (boss && bossCountdownDisplay && bossCountdownDisplay.style.display !== 'none') {
                      bossCountdownDisplay.style.display = 'none';
                 }
 
@@ -1136,6 +1205,12 @@
                  console.log("REVIVE USADO! Ultima chance gasta.");
                  showMessage("REVIVIDO! Ultima Chance!", 150);
                  // Opcional: Tocar som de reviver
+                 // NOVO: Feedback de dano - pequeno flash vermelho (temporário)
+                // push();
+                // fill(255, 0, 0, 100); // Vermelho semi-transparente
+                // rect(0, 0, width, height); // Cobre a tela toda brevemente
+                // pop();
+                // // A animação de flash do player e o shake já dão feedback
              } else {
                  playerLives = 0; // Garante que vidas fiquem 0
                  updateLivesDisplay();
@@ -1146,8 +1221,8 @@
 
         // Função para iniciar efeitos visuais do revive
         function startReviveEffects() {
-             reviveShakeTimer = 25;
-             reviveLightTimer = 35;
+             reviveShakeTimer = 30; // Shake mais intenso
+             reviveLightTimer = 40; // Luz mais duradoura
             // Adiciona um overlay flash rápido
            const flashOverlay = document.createElement('div');
            flashOverlay.className = 'revive-flash-overlay';
@@ -1162,18 +1237,18 @@
         }
 
         function showMenuScreen() {
-             textAlign(CENTER, CENTER);
-             textSize(min(width * 0.08, height * 0.1, 50));
-             fill(0, 255, 255); stroke(0); strokeWeight(3);
-             text("Yuri 22 Dash Pro", width / 2, height * 0.3);
+              textAlign(CENTER, CENTER);
+              textSize(min(width * 0.08, height * 0.1, 50));
+              fill(0, 255, 255); stroke(0); strokeWeight(3);
+              text("Yuri 22 Dash Pro", width / 2, height * 0.3);
 
-             // Nick e Nível Máximo agora estão no #profileArea (HTML)
+              // Nick e Nível Máximo agora estão no #profileArea (HTML)
 
-             textSize(min(width * 0.03, height * 0.04, 20));
-             fill(255); noStroke();
-             text("Use [ESPAÇO] ou [TOQUE] para pular!", width / 2, height * 0.55);
-             // Atualiza instruções se necessário
-             if (instructionsContent) updateInstructionsContent();
+              textSize(min(width * 0.03, height * 0.04, 20));
+              fill(255); noStroke();
+              text("Use [ESPAÇO] ou [TOQUE] para pular!", width / 2, height * 0.55);
+              // Atualiza instruções se necessário
+              if (instructionsContent) updateInstructionsContent();
 
 
         }
@@ -1183,8 +1258,16 @@
              if(player) player.show(true); // Força opaco
              for (let obs of obstacles) { obs.show(); }
              if(boss) {
-                 boss.show();
-                 for(let p of boss.projectiles) { p.show(); } // Mostra projéteis parados
+                 boss.show(); // Corpo
+                 // Desenha aviso e projéteis PARADOS
+                push();
+                if (boss.warningTimer > 0 && boss.warningPosition) {
+                    boss.drawWarning(); // Desenha aviso parado
+                }
+                for (let p of boss.projectiles) {
+                    p.show(); // Desenha projéteis parados
+                }
+                pop();
              }
              // Overlay HTML é controlado pelo changeState
         }
@@ -1192,7 +1275,7 @@
         function showGameOverScreen() {
              if(player) player.show(true); // Mostra estado final (sem piscar)
              for (let obs of obstacles) { obs.show(); }
-             if(boss) { boss.show(); for(let p of boss.projectiles) { p.show(); } }
+             if(boss) { boss.show(); for(let p of boss.projectiles) { p.show(); } } // Mostra estado final do boss/projéteis
 
              // Mensagem Game Over (desenhada no canvas, sob o zoom)
              textAlign(CENTER, CENTER);
@@ -1208,25 +1291,6 @@
 
              // Botões "Voltar ao Menu" e "Reiniciar" são criados/mostrados pelo changeState
         }
-
-        /* // Função showWinScreen não é mais necessária
-        function showWinScreen() {
-             if(player) player.show(true);
-
-             textAlign(CENTER, CENTER);
-             textSize(min(width * 0.1, height * 0.15, 60));
-             fill(0, 255, 0); stroke(0); strokeWeight(4);
-             text("VOCÊ VENCEU!", width / 2, height * 0.4);
-
-             textSize(min(width * 0.05, height * 0.06, 30));
-             fill(255); noStroke();
-             text(`Parabéns, ${playerNickname}!`, width / 2, height * 0.55);
-             text("Score Final: " + score, width / 2, height * 0.65);
-             text("Nível Final: " + currentLevel, width / 2, height * 0.75);
-
-             // Botões "Voltar ao Menu" e "Reiniciar" são criados/mostrados pelo changeState
-        }
-        */
 
         function goToMenu() {
              if (gameState === 'loading' || gameState === 'menu') return;
@@ -1295,7 +1359,7 @@
         function drawBackground() {
             background(10, 10, 30);
             fill(255, 255, 255, 150); noStroke();
-            let speedMultiplier = (gameState === 'play' ? (1 + currentLevel * 0.05 + bossLevel * 0.02) : (gameState === 'menu' ? 0.2 : 0)); // Leve aceleração com bossLevel
+            let speedMultiplier = (gameState === 'play' ? (1 + currentLevel * 0.05 + (boss ? bossLevel * 0.02 : 0)) : (gameState === 'menu' ? 0.2 : 0)); // Leve aceleração com bossLevel se boss existe
             for (let star of stars) {
                 ellipse(star.x, star.y, star.size, star.size);
                 if (gameState === 'play' || gameState === 'menu') {
@@ -1374,12 +1438,16 @@
                 profileLevelDisplay = document.getElementById('profileLevelDisplay');
                 profileSettingsIcon = document.getElementById('profileSettingsIcon');
                 footerCopyright = document.getElementById('footerCopyright');
+                // NOVO: Barra de Vida Boss
+                bossHealthBarContainer = document.getElementById('bossHealthBarContainer');
+                bossHealthBar = document.getElementById('bossHealthBar');
+                bossHealthText = document.getElementById('bossHealthText');
 
 
-                if (!backButton || !skinButton || !pauseButton || !abilityButton || !skinContainer || !loadingMessage || !scoreDisplay || !levelDisplay || !livesDisplay || !timerDisplay || !bossCountdownDisplay || !pauseOverlay || !levelUpDisplay || !p5ButtonContainer || !instructionsPanel || !closeInstructionsButton || !nicknameArea || !nicknameInput || !nicknameButton || !particleColorSelector || !profileArea || !profilePic || !profileNicknameDisplay || !profileLevelDisplay || !profileSettingsIcon || !footerCopyright) {
-                     console.warn("ERRO: Um ou mais elementos HTML essenciais não foram encontrados! Verifique os IDs.");
+                if (!backButton || !skinButton || !pauseButton || !abilityButton || !skinContainer || !loadingMessage || !scoreDisplay || !levelDisplay || !livesDisplay || !timerDisplay || !bossCountdownDisplay || !pauseOverlay || !levelUpDisplay || !p5ButtonContainer || !instructionsPanel || !closeInstructionsButton || !nicknameArea || !nicknameInput || !nicknameButton || !particleColorSelector || !profileArea || !profilePic || !profileNicknameDisplay || !profileLevelDisplay || !profileSettingsIcon || !footerCopyright || !bossHealthBarContainer || !bossHealthBar || !bossHealthText ) {
+                    console.warn("ERRO: Um ou mais elementos HTML essenciais não foram encontrados! Verifique os IDs.");
                 } else {
-                     console.log("getHtmlElements: Elementos encontrados.");
+                    console.log("getHtmlElements: Elementos encontrados.");
                 }
             } catch (e) { console.error("ERRO em getHtmlElements:", e); }
         }
@@ -1400,13 +1468,13 @@
         function hideInstructionsPanel() { if (instructionsPanel) instructionsPanel.style.display = 'none'; }
          // Atualiza conteúdo das instruções dinamicamente
          function updateInstructionsContent() {
-            if (!instructionsContent) return;
-            // O conteúdo base está no HTML, aqui podemos adicionar detalhes se necessário
-             // Ex: Se alguma feature mudar dinamicamente
-             // Re-inicializa ícones Lucide se presentes nas instruções
-            if (typeof lucide !== 'undefined') {
-                 try { lucide.createIcons({ context: instructionsContent }); } catch(e) {}
-             }
+             if (!instructionsContent) return;
+             // O conteúdo base está no HTML, aqui podemos adicionar detalhes se necessário
+              // Ex: Se alguma feature mudar dinamicamente
+              // Re-inicializa ícones Lucide se presentes nas instruções
+             if (typeof lucide !== 'undefined') {
+                  try { lucide.createIcons({ context: instructionsContent }); } catch(e) {}
+              }
          }
 
         // Funções para criar/remover botões p5 dinamicamente
@@ -1415,8 +1483,6 @@
              if (instructionsButtonP5) { instructionsButtonP5.remove(); instructionsButtonP5 = null; }
              if (gameOverMenuButtonP5) { gameOverMenuButtonP5.remove(); gameOverMenuButtonP5 = null; }
              if (gameOverRestartButtonP5) { gameOverRestartButtonP5.remove(); gameOverRestartButtonP5 = null; }
-             // if (winMenuButtonP5) { winMenuButtonP5.remove(); winMenuButtonP5 = null; } // Removido
-             // if (winRestartButtonP5) { winRestartButtonP5.remove(); winRestartButtonP5 = null; } // Removido
         }
 
         function createMenuButtons() {
@@ -1451,24 +1517,6 @@
              }
         }
 
-         /* // createWinButtons não é mais necessário
-          function createWinButtons() {
-             removeAllP5Buttons();
-             if (!winMenuButtonP5) {
-                 winMenuButtonP5 = createButton("Voltar ao Menu")
-                     .class("p5Button secondary")
-                     .parent(p5ButtonContainer)
-                     .mousePressed(goToMenu);
-             }
-             if (!winRestartButtonP5) {
-                 winRestartButtonP5 = createButton("Jogar Novamente")
-                     .class("p5Button")
-                     .parent(p5ButtonContainer)
-                     .mousePressed(startGame);
-             }
-         }
-         */
-
         function changeState(newState) {
              if (gameState === newState) return;
              console.log(`changeState: ${gameState} -> ${newState}`);
@@ -1483,7 +1531,7 @@
                    backButton, skinButton, pauseButton, abilityButton, pauseOverlay,
                    scoreDisplay, levelDisplay, livesDisplay, timerDisplay, bossCountdownDisplay,
                    skinContainer, instructionsPanel, nicknameArea, particleColorSelector,
-                   profileArea
+                   profileArea, bossHealthBarContainer // Adicionado container da barra de vida
               ];
               elementsToManage.forEach(el => { if (el) el.style.display = 'none'; });
 
@@ -1524,9 +1572,16 @@
                      if (timerDisplay) timerDisplay.style.display = 'block';
                      // Mostra countdown se aplicável (início ou respawn) E não pausado
                      if (bossCountdownDisplay && newState !== 'paused' && ((!boss && bossLevel === 1 && (millis() - gameStartTime)/1000 < BOSS_APPEAR_TIME) || bossRespawnTimer > 0) ) {
-                        bossCountdownDisplay.style.display = 'block';
+                         bossCountdownDisplay.style.display = 'block';
                      }
                      if (newState === 'paused' && pauseOverlay) pauseOverlay.style.display = 'flex';
+
+                     // NOVO: Mostra barra de vida se o boss existir
+                     if (boss && bossHealthBarContainer) {
+                         bossHealthBarContainer.style.display = 'block';
+                         updateBossHealthBar(); // Atualiza o preenchimento inicial
+                     }
+
                      updateAbilityButton();
                      if(newState === 'play' && oldState !== 'paused') targetZoom = 1.25;
                      else if (newState === 'paused') targetZoom = 1.1;
@@ -1537,21 +1592,12 @@
                      if (scoreDisplay) scoreDisplay.style.display = 'block';
                      if (levelDisplay) levelDisplay.style.display = 'block';
                      if (livesDisplay) { // Mostra Vidas zeradas
-                         livesDisplay.innerText = "Vidas: 0";
-                         livesDisplay.style.display = 'block';
+                          livesDisplay.innerText = "Vidas: 0";
+                          livesDisplay.style.display = 'block';
                      }
                      if (timerDisplay) timerDisplay.style.display = 'block'; // Mostra timer final
                      targetZoom = 1.0;
                      break;
-                 // case "win": // Estado Win removido
-                 //    createWinButtons();
-                 //    if(p5ButtonContainer) p5ButtonContainer.elt.style.display = 'flex';
-                 //    if (scoreDisplay) scoreDisplay.style.display = 'block';
-                 //    if (levelDisplay) levelDisplay.style.display = 'block';
-                 //    if (livesDisplay) livesDisplay.style.display = 'block';
-                 //    if (timerDisplay) timerDisplay.style.display = 'block';
-                 //    targetZoom = 1.0;
-                 //    break;
              }
         }
 
@@ -1578,143 +1624,144 @@
 
          // Handler de toque APENAS para o canvas
          function handleCanvasTouch(event) {
-             console.log("Canvas Touch detected. Gamestate:", gameState);
-             let targetElement = event.target;
-             // Verifica se o toque foi em algum botão HTML/p5 ou menu
-            if(targetElement.closest('.overlay-button, .p5Button, #skinContainer, #instructionsPanel, #nicknameArea, #particleColorSelector, #profileArea')) {
+              console.log("Canvas Touch detected. Gamestate:", gameState);
+              let targetElement = event.target;
+              // Verifica se o toque foi em algum botão HTML/p5 ou menu
+             if(targetElement.closest('.overlay-button, .p5Button, #skinContainer, #instructionsPanel, #nicknameArea, #particleColorSelector, #profileArea')) {
                  console.log("Touch on UI element, ignoring for jump/pause.");
                   return true; // Deixa o elemento HTML lidar
              }
 
-             // PULO (TOQUE)
-             if (gameState === 'play' && player) {
-                 player.jump();
-                 return false; // Previne scroll/zoom
-             }
-             else if (gameState === 'paused') {
-                 togglePause();
-                 return false;
-             }
-             return true;
+              // PULO (TOQUE)
+              if (gameState === 'play' && player) {
+                  player.jump();
+                  return false; // Previne scroll/zoom
+              }
+              else if (gameState === 'paused') {
+                  togglePause();
+                  return false;
+              }
+              return true;
          }
 
          // --- Funções de Skin ---
          function toggleSkinSelect() {
-              if (!skinContainer || !skinButton || !gameContainer) return;
-              if (skinContainer.style.display === "none" || skinContainer.style.display === "") {
-                  populateSkinContainer(); // Popula/Atualiza ao abrir
-                  skinContainer.style.display = "flex";
-                  // Ajusta posição (lógica mantida)
-                  const skinButtonRect = skinButton.getBoundingClientRect();
-                  const containerRect = gameContainer.elt.getBoundingClientRect();
-                  let topPos = (skinButtonRect.bottom - containerRect.top + 5);
-                  let rightPos = (containerRect.right - skinButtonRect.right);
-                  let availableHeight = window.innerHeight - topPos - 20;
-                  let maxHeight = Math.min(availableHeight, window.innerHeight * 0.7);
-                  skinContainer.style.top = topPos + 'px';
-                  skinContainer.style.right = rightPos + 'px';
-                  skinContainer.style.maxHeight = maxHeight + 'px';
-              } else {
-                  skinContainer.style.display = "none";
-              }
+                if (!skinContainer || !skinButton || !gameContainer) return;
+                if (skinContainer.style.display === "none" || skinContainer.style.display === "") {
+                    populateSkinContainer(); // Popula/Atualiza ao abrir
+                    skinContainer.style.display = "flex";
+                    // Ajusta posição (lógica mantida)
+                    const skinButtonRect = skinButton.getBoundingClientRect();
+                    const containerRect = gameContainer.elt.getBoundingClientRect();
+                    let topPos = (skinButtonRect.bottom - containerRect.top + 5);
+                    let rightPos = (containerRect.right - skinButtonRect.right);
+                    let availableHeight = window.innerHeight - topPos - 20;
+                    let maxHeight = Math.min(availableHeight, window.innerHeight * 0.7);
+                    skinContainer.style.top = topPos + 'px';
+                    skinContainer.style.right = rightPos + 'px';
+                    skinContainer.style.maxHeight = maxHeight + 'px';
+                } else {
+                    skinContainer.style.display = "none";
+                }
          }
 
+
          function populateSkinContainer() {
-              if (!skinContainer) { console.error("populateSkinContainer: Container não encontrado!"); return; }
-              skinContainer.innerHTML = '';
-              console.log("populateSkinContainer: Populando skins. Nível Máximo:", highestLevelReached);
+                if (!skinContainer) { console.error("populateSkinContainer: Container não encontrado!"); return; }
+                skinContainer.innerHTML = '';
+                console.log("populateSkinContainer: Populando skins. Nível Máximo:", highestLevelReached);
 
-              let skinsExist = false;
-              for (const key in playerSkins) {
-                  skinsExist = true;
-                  const skin = playerSkins[key];
-                  const isUnlocked = highestLevelReached >= skin.unlockLevel;
+                let skinsExist = false;
+                for (const key in playerSkins) {
+                    skinsExist = true;
+                    const skin = playerSkins[key];
+                    const isUnlocked = highestLevelReached >= skin.unlockLevel;
 
-                  const entryDiv = document.createElement('div');
-                  entryDiv.classList.add('skin-entry');
-                  entryDiv.dataset.skinKey = key;
-                  if (!isUnlocked) entryDiv.classList.add('locked');
-                  if (key === selectedSkinKey) entryDiv.classList.add('selected');
+                    const entryDiv = document.createElement('div');
+                    entryDiv.classList.add('skin-entry');
+                    entryDiv.dataset.skinKey = key;
+                    if (!isUnlocked) entryDiv.classList.add('locked');
+                    if (key === selectedSkinKey) entryDiv.classList.add('selected');
 
-                  const img = document.createElement('img');
-                  img.classList.add('skinOption');
-                  img.alt = skin.name;
-                  img.title = `${skin.name} (${skin.rarity}) - ${isUnlocked ? 'Desbloqueada' : `Nível ${skin.unlockLevel}`}`;
+                    const img = document.createElement('img');
+                    img.classList.add('skinOption');
+                    img.alt = skin.name;
+                    img.title = `${skin.name} (${skin.rarity}) - ${isUnlocked ? 'Desbloqueada' : `Nível ${skin.unlockLevel}`}`;
 
-                  // Lógica de Imagem com Fallback (mantida)
-                  if (skin.loadedImg && skin.loadedImg.width > 0 && skin.loadedImg.height > 0) {
-                      img.src = skin.loadedImg.src;
-                  } else {
-                       if (skin.img) {
-                           img.src = skin.img;
-                       } else {
-                            const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
-                            const faceText = skin.face ? encodeURIComponent(skin.face) : '?';
-                            const placeholderUrl = `https://placehold.co/60x60/${bgColor}/000?text=${faceText}&font=pressstart2p`;
-                            img.src = placeholderUrl;
-                       }
-                  }
+                    // Lógica de Imagem com Fallback (mantida)
+                    if (skin.loadedImg && skin.loadedImg.width > 0 && skin.loadedImg.height > 0) {
+                        img.src = skin.loadedImg.src;
+                    } else {
+                         if (skin.img) {
+                             img.src = skin.img;
+                         } else {
+                             const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
+                             const faceText = skin.face ? encodeURIComponent(skin.face) : '?';
+                             const placeholderUrl = `https://placehold.co/60x60/${bgColor}/000?text=${faceText}&font=pressstart2p`;
+                             img.src = placeholderUrl;
+                         }
+                    }
 
-                  // Fallback final usando onerror (mantido)
-                  img.onerror = function() {
-                      console.warn(`populateSkinContainer: Falha ao carregar ${this.src}. Usando placeholder final.`);
-                       const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
-                       const faceText = skin.face ? encodeURIComponent(skin.face) : 'ERR';
-                       const fallbackUrl = `https://placehold.co/60x60/${bgColor}/333?text=${faceText}&font=pressstart2p`;
-                       if (this.src !== fallbackUrl) {
-                           this.src = fallbackUrl;
-                       }
-                       this.onerror = null;
-                  };
+                    // Fallback final usando onerror (mantido)
+                    img.onerror = function() {
+                         console.warn(`populateSkinContainer: Falha ao carregar ${this.src}. Usando placeholder final.`);
+                         const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
+                         const faceText = skin.face ? encodeURIComponent(skin.face) : 'ERR';
+                         const fallbackUrl = `https://placehold.co/60x60/${bgColor}/333?text=${faceText}&font=pressstart2p`;
+                         if (this.src !== fallbackUrl) {
+                             this.src = fallbackUrl;
+                         }
+                         this.onerror = null;
+                    };
 
 
-                  const nameSpan = document.createElement('span'); nameSpan.classList.add('skin-name'); nameSpan.innerText = skin.name;
-                  const raritySpan = document.createElement('span'); raritySpan.classList.add('skin-rarity', `rarity-${skin.rarity}`); raritySpan.innerText = skin.rarity;
+                    const nameSpan = document.createElement('span'); nameSpan.classList.add('skin-name'); nameSpan.innerText = skin.name;
+                    const raritySpan = document.createElement('span'); raritySpan.classList.add('skin-rarity', `rarity-${skin.rarity}`); raritySpan.innerText = skin.rarity;
 
-                  entryDiv.appendChild(img);
-                  entryDiv.appendChild(nameSpan);
-                  entryDiv.appendChild(raritySpan);
+                    entryDiv.appendChild(img);
+                    entryDiv.appendChild(nameSpan);
+                    entryDiv.appendChild(raritySpan);
 
-                  if (!isUnlocked) {
-                       const lockOverlay = document.createElement('div'); lockOverlay.classList.add('lock-overlay');
-                       const lockIcon = document.createElement('i'); lockIcon.setAttribute('data-lucide', 'lock');
-                       const unlockSpan = document.createElement('span'); unlockSpan.classList.add('skin-unlock'); unlockSpan.innerText = `Nível ${skin.unlockLevel}`;
-                       lockOverlay.appendChild(lockIcon); lockOverlay.appendChild(unlockSpan);
-                       entryDiv.appendChild(lockOverlay);
-                  } else {
-                       entryDiv.onclick = () => selectSkin(key);
-                  }
-                  skinContainer.appendChild(entryDiv);
-              }
+                    if (!isUnlocked) {
+                         const lockOverlay = document.createElement('div'); lockOverlay.classList.add('lock-overlay');
+                         const lockIcon = document.createElement('i'); lockIcon.setAttribute('data-lucide', 'lock');
+                         const unlockSpan = document.createElement('span'); unlockSpan.classList.add('skin-unlock'); unlockSpan.innerText = `Nível ${skin.unlockLevel}`;
+                         lockOverlay.appendChild(lockIcon); lockOverlay.appendChild(unlockSpan);
+                         entryDiv.appendChild(lockOverlay);
+                    } else {
+                         entryDiv.onclick = () => selectSkin(key);
+                    }
+                    skinContainer.appendChild(entryDiv);
+                }
 
-              if (!skinsExist) { skinContainer.innerHTML = '<span>Nenhuma skin encontrada.</span>'; }
+                if (!skinsExist) { skinContainer.innerHTML = '<span>Nenhuma skin encontrada.</span>'; }
 
-              if (typeof lucide !== 'undefined') {
-                  try { lucide.createIcons(); } catch(e) { console.warn("Erro ao criar ícones Lucide:", e); }
-              } else { console.warn("populateSkinContainer: Biblioteca Lucide não carregada."); }
+                if (typeof lucide !== 'undefined') {
+                    try { lucide.createIcons(); } catch(e) { console.warn("Erro ao criar ícones Lucide:", e); }
+                } else { console.warn("populateSkinContainer: Biblioteca Lucide não carregada."); }
          }
 
 
          function selectSkin(key) {
-              if (!playerSkins[key]) { console.warn("selectSkin: Skin inválida:", key); return; }
-              if (highestLevelReached < playerSkins[key].unlockLevel) {
-                  console.log("selectSkin: Skin bloqueada (Nível Máximo insuficiente):", key);
-                  return;
-              }
-              selectedSkinKey = key;
-              console.log("selectSkin: Skin selecionada:", selectedSkinKey);
-              if (player) { player.setAppearance(playerSkins[selectedSkinKey]); }
-              updateSelectedSkinVisual();
-              updateProfilePic();
-              saveGameData();
-              if(skinContainer) skinContainer.style.display = "none";
+                if (!playerSkins[key]) { console.warn("selectSkin: Skin inválida:", key); return; }
+                if (highestLevelReached < playerSkins[key].unlockLevel) {
+                    console.log("selectSkin: Skin bloqueada (Nível Máximo insuficiente):", key);
+                    return;
+                }
+                selectedSkinKey = key;
+                console.log("selectSkin: Skin selecionada:", selectedSkinKey);
+                if (player) { player.setAppearance(playerSkins[selectedSkinKey]); }
+                updateSelectedSkinVisual();
+                updateProfilePic();
+                saveGameData();
+                if(skinContainer) skinContainer.style.display = "none";
          }
 
          function updateSelectedSkinVisual() {
-              if (!skinContainer || skinContainer.style.display === 'none') return;
-              document.querySelectorAll('.skin-entry').forEach(el => el.classList.remove('selected'));
-              const selectedEntry = skinContainer.querySelector(`.skin-entry[data-skin-key="${selectedSkinKey}"]`);
-              if (selectedEntry) { selectedEntry.classList.add('selected'); }
+                if (!skinContainer || skinContainer.style.display === 'none') return;
+                document.querySelectorAll('.skin-entry').forEach(el => el.classList.remove('selected'));
+                const selectedEntry = skinContainer.querySelector(`.skin-entry[data-skin-key="${selectedSkinKey}"]`);
+                if (selectedEntry) { selectedEntry.classList.add('selected'); }
          }
 
          // --- Funções de UI Update ---
@@ -1746,36 +1793,52 @@
          }
           // Atualiza a foto do perfil (lógica mantida)
           function updateProfilePic() {
-              if (!profilePic) return;
-              const skinData = playerSkins[selectedSkinKey];
-              if (skinData) {
-                   if (skinData.loadedImg && skinData.loadedImg.width > 0) {
-                       profilePic.style.backgroundImage = `url('${skinData.loadedImg.src}')`;
-                       profilePic.style.backgroundColor = 'transparent';
-                   } else if (skinData.img) {
-                        profilePic.style.backgroundImage = `url('${skinData.img}')`;
-                        profilePic.style.backgroundColor = 'transparent';
-                        const tempImg = new Image();
-                        tempImg.onerror = () => { setProfileFallbackColor(skinData); };
-                        tempImg.src = skinData.img;
-                   }
-                   else {
-                       setProfileFallbackColor(skinData);
-                   }
-              } else {
-                   profilePic.style.backgroundImage = 'none';
-                   profilePic.style.backgroundColor = '#888';
-              }
+                if (!profilePic) return;
+                const skinData = playerSkins[selectedSkinKey];
+                if (skinData) {
+                     if (skinData.loadedImg && skinData.loadedImg.width > 0) {
+                         profilePic.style.backgroundImage = `url('${skinData.loadedImg.src}')`;
+                         profilePic.style.backgroundColor = 'transparent';
+                     } else if (skinData.img) {
+                         profilePic.style.backgroundImage = `url('${skinData.img}')`;
+                         profilePic.style.backgroundColor = 'transparent';
+                         const tempImg = new Image();
+                         tempImg.onerror = () => { setProfileFallbackColor(skinData); };
+                         tempImg.src = skinData.img;
+                     }
+                     else {
+                         setProfileFallbackColor(skinData);
+                     }
+                } else {
+                     profilePic.style.backgroundImage = 'none';
+                     profilePic.style.backgroundColor = '#888';
+                }
           }
          // Função auxiliar para definir cor de fallback no perfil (mantida)
          function setProfileFallbackColor(skinData) {
              if (!profilePic) return;
               profilePic.style.backgroundImage = 'none';
              if (skinData && skinData.color) {
-                  profilePic.style.backgroundColor = `rgb(${skinData.color[0]}, ${skinData.color[1]}, ${skinData.color[2]})`;
+                 profilePic.style.backgroundColor = `rgb(${skinData.color[0]}, ${skinData.color[1]}, ${skinData.color[2]})`;
              } else {
-                  profilePic.style.backgroundColor = '#555';
+                 profilePic.style.backgroundColor = '#555';
              }
+         }
+         // NOVO: Atualiza a Barra de Vida do Boss (HTML)
+         function updateBossHealthBar() {
+             if (!boss || !bossHealthBar || !bossHealthText || !bossHealthBarContainer) return;
+
+             if (bossHealthBarContainer.style.display !== 'block' && gameState !== 'gameover' ) { // Mostra apenas se não for game over
+                 bossHealthBarContainer.style.display = 'block';
+             } else if (gameState === 'gameover' && bossHealthBarContainer.style.display === 'block') {
+                 bossHealthBarContainer.style.display = 'none'; // Esconde no game over
+             }
+
+
+             const healthPercent = constrain(boss.health / boss.maxHealth, 0, 1) * 100;
+             bossHealthBar.style.width = `${healthPercent}%`;
+             // bossHealthText.innerText = `BOSS NV ${boss.level} (${floor(healthPercent)}%)`; // Texto com %
+              bossHealthText.innerText = `BOSS NV ${boss.level}`; // Texto mais simples
          }
 
 
@@ -1804,8 +1867,8 @@
                  let canUseNow = false;
                  if (currentAbilityType === 'kill' && boss) { // Kill só com boss
                      canUseNow = true;
-                 } else if (currentAbilityType === 'dodge') { // Dodge sempre (se disponível) - AJUSTE: Talvez só sem boss? Decidi manter sempre
-                      canUseNow = true; // Permitindo esquiva mesmo com boss (pode ser útil)
+                 } else if (currentAbilityType === 'dodge') { // Dodge sempre (permitindo esquiva mesmo com boss)
+                      canUseNow = true;
                  }
 
                  if (canUseNow && abilityReady) {
@@ -1826,7 +1889,6 @@
                      abilityButton.classList.add('locked'); // Reusa estilo locked
                      iconLock.style.display = 'inline';
                      if (currentAbilityType === 'kill' && !boss) textSpan.textContent = 'Só c/ Boss';
-                     // else if (currentAbilityType === 'dodge' && boss) textSpan.textContent = 'Sem Boss'; // Se quisesse bloquear dodge com boss
                      else textSpan.textContent = 'Nv.' + (currentLevel < 3 ? 3 : 6) ; // Fallback
                  }
 
@@ -1844,135 +1906,135 @@
 
 
          function useAbility() {
-            // Condições para *poder* usar a habilidade no estado atual
-            let canUseCondition = false;
-            if (abilityReady && gameState === 'play') { // Só funciona se pronta e jogando
-                if (currentAbilityType === 'kill' && boss) { // Kill só com boss
-                    canUseCondition = true;
-                } else if (currentAbilityType === 'dodge') { // Dodge sempre (decisão de design)
-                    canUseCondition = true;
-                }
-            }
-
-             if (!canUseCondition) {
-                 console.log("Não pode usar habilidade agora.");
-                 // Mensagens de feedback
-                 if (gameState !== 'play') showMessage("Só funciona no jogo!", 90);
-                 else if (!abilityAvailable) showMessage(`Libera no Nível ${currentLevel < 3 ? 3 : 6}!`, 120);
-                 else if (!abilityReady) showMessage("Habilidade Recarregando!", 90);
-                 else if (currentAbilityType === 'kill' && !boss) showMessage("Tiro Certeiro só funciona contra o Boss!", 120);
-                 // else if (currentAbilityType === 'dodge' && boss) showMessage("Esquiva bloqueada com Boss!", 120); // Se quisesse bloquear
-                 return;
-             }
-
-             console.log(`Usando habilidade: ${currentAbilityType}`);
-             abilityReady = false; // Consome
-             abilityCooldownTimer = ABILITY_COOLDOWN; // Inicia cooldown
-             updateAbilityButton(); // Atualiza botão para cooldown
-
-             if (currentAbilityType === 'dodge') {
-                 player.x += DODGE_DISTANCE;
-                 player.x = constrain(player.x, player.w / 2, width - player.w / 2);
-                 console.log("Esquiva usada!");
-                 showMessage("Esquiva!", 90);
-                 // Efeito visual de esquiva
-                 for(let i=0; i<15; i++) {
-                     let angle = random(TWO_PI);
-                     let speed = random(2, 5);
-                     playerParticles.push(new PlayerParticle(player.x - DODGE_DISTANCE/2, player.y, cos(angle)*speed, sin(angle)*speed, 20, [171, 71, 188])); // Partículas roxas saindo de trás
-                 }
-
-             } else if (currentAbilityType === 'kill') {
-                 killAbilityClicks++;
-                 console.log(`Clique para matar chefe: ${killAbilityClicks}/3`);
-                 showMessage(`Clique Matar Boss: ${killAbilityClicks}/3`, 90);
-
-                 if (killAbilityClicks >= 3) {
-                     if (boss) {
-                         boss.takeDamage(BOSS_MAX_HEALTH); // Dano fatal
-                         console.log("Tiro certeiro disparado! Boss deve morrer.");
-                         // Mensagem de morte é mostrada quando boss.health <= 0
-                         // killAbilityClicks = 0; // Resetado quando boss morre ou jogo reinicia
-                     }
-                 } else {
-                    // Feedback visual/sonoro de clique? (opcional)
+             // Condições para *poder* usar a habilidade no estado atual
+             let canUseCondition = false;
+             if (abilityReady && gameState === 'play') { // Só funciona se pronta e jogando
+                 if (currentAbilityType === 'kill' && boss) { // Kill só com boss
+                     canUseCondition = true;
+                 } else if (currentAbilityType === 'dodge') { // Dodge sempre (decisão de design)
+                     canUseCondition = true;
                  }
              }
+
+              if (!canUseCondition) {
+                  console.log("Não pode usar habilidade agora.");
+                  // Mensagens de feedback
+                  if (gameState !== 'play') showMessage("Só funciona no jogo!", 90);
+                  else if (!abilityAvailable) showMessage(`Libera no Nível ${currentLevel < 3 ? 3 : 6}!`, 120);
+                  else if (!abilityReady) showMessage("Habilidade Recarregando!", 90);
+                  else if (currentAbilityType === 'kill' && !boss) showMessage("Tiro Certeiro só funciona contra o Boss!", 120);
+                  return;
+              }
+
+              console.log(`Usando habilidade: ${currentAbilityType}`);
+              abilityReady = false; // Consome
+              abilityCooldownTimer = ABILITY_COOLDOWN; // Inicia cooldown
+              updateAbilityButton(); // Atualiza botão para cooldown
+
+              if (currentAbilityType === 'dodge') {
+                  player.x += DODGE_DISTANCE;
+                  player.x = constrain(player.x, player.w / 2, width - player.w / 2);
+                  console.log("Esquiva usada!");
+                  showMessage("Esquiva!", 90);
+                  // Efeito visual de esquiva
+                  for(let i=0; i<15; i++) {
+                      let angle = random(TWO_PI);
+                      let speed = random(2, 5);
+                      playerParticles.push(new PlayerParticle(player.x - DODGE_DISTANCE/2, player.y, cos(angle)*speed, sin(angle)*speed, 20, [171, 71, 188])); // Partículas roxas saindo de trás
+                  }
+
+              } else if (currentAbilityType === 'kill') {
+                  killAbilityClicks++;
+                  console.log(`Clique para matar chefe: ${killAbilityClicks}/3`);
+                  showMessage(`Clique Matar Boss: ${killAbilityClicks}/3`, 90);
+
+                  if (killAbilityClicks >= 3) {
+                      if (boss) {
+                          // Dano fatal baseado na vida máxima do boss atual
+                          boss.takeDamage(boss.maxHealth);
+                          console.log("Tiro certeiro disparado! Boss deve morrer.");
+                          // Mensagem de morte é mostrada quando boss.health <= 0
+                           killAbilityClicks = 0; // Reseta após o tiro fatal
+                      }
+                  } else {
+                      // Feedback visual/sonoro de clique? (opcional)
+                  }
+              }
          }
 
 
          // --- Local Storage --- (Lógica mantida)
          function saveGameData() {
-             try {
-                 localStorage.setItem('yuriDash_highestLevel', highestLevelReached.toString());
-                 localStorage.setItem('yuriDash_selectedSkin', selectedSkinKey);
-                 localStorage.setItem('yuriDash_nickname', playerNickname);
-                 localStorage.setItem('yuriDash_particleColor', JSON.stringify(playerParticleColor));
-             } catch (e) {
-                 console.error("Erro ao salvar dados no localStorage:", e);
-             }
+              try {
+                  localStorage.setItem('yuriDash_highestLevel', highestLevelReached.toString());
+                  localStorage.setItem('yuriDash_selectedSkin', selectedSkinKey);
+                  localStorage.setItem('yuriDash_nickname', playerNickname);
+                  localStorage.setItem('yuriDash_particleColor', JSON.stringify(playerParticleColor));
+              } catch (e) {
+                  console.error("Erro ao salvar dados no localStorage:", e);
+              }
          }
 
          function loadGameData() {
-             try {
-                 const savedLevel = localStorage.getItem('yuriDash_highestLevel');
-                 if (savedLevel) { highestLevelReached = parseInt(savedLevel, 10) || 1; }
+              try {
+                  const savedLevel = localStorage.getItem('yuriDash_highestLevel');
+                  if (savedLevel) { highestLevelReached = parseInt(savedLevel, 10) || 1; }
 
-                 const savedSkin = localStorage.getItem('yuriDash_selectedSkin');
-                 if (savedSkin && playerSkins[savedSkin]) {
-                     if (highestLevelReached >= playerSkins[savedSkin].unlockLevel) {
-                          selectedSkinKey = savedSkin;
-                     } else {
-                          selectedSkinKey = "yuri_comum";
-                     }
-                 } else {
-                      selectedSkinKey = "yuri_comum";
-                 }
+                  const savedSkin = localStorage.getItem('yuriDash_selectedSkin');
+                  if (savedSkin && playerSkins[savedSkin]) {
+                       if (highestLevelReached >= playerSkins[savedSkin].unlockLevel) {
+                           selectedSkinKey = savedSkin;
+                       } else {
+                           selectedSkinKey = "yuri_comum";
+                       }
+                  } else {
+                        selectedSkinKey = "yuri_comum";
+                  }
 
-                 const savedNick = localStorage.getItem('yuriDash_nickname');
-                 if (savedNick) { playerNickname = savedNick; }
+                  const savedNick = localStorage.getItem('yuriDash_nickname');
+                  if (savedNick) { playerNickname = savedNick; }
 
-                 const savedColor = localStorage.getItem('yuriDash_particleColor');
-                 if (savedColor) {
-                     try {
-                         const parsedColor = JSON.parse(savedColor);
-                         if (Array.isArray(parsedColor) && parsedColor.length === 3 && parsedColor.every(c => typeof c === 'number')) {
-                             playerParticleColor = parsedColor;
-                         }
-                     } catch (e) { console.warn("Erro ao parsear cor salva:", e); }
-                 }
+                  const savedColor = localStorage.getItem('yuriDash_particleColor');
+                  if (savedColor) {
+                      try {
+                          const parsedColor = JSON.parse(savedColor);
+                          if (Array.isArray(parsedColor) && parsedColor.length === 3 && parsedColor.every(c => typeof c === 'number')) {
+                              playerParticleColor = parsedColor;
+                          }
+                      } catch (e) { console.warn("Erro ao parsear cor salva:", e); }
+                  }
 
-                 console.log("Dados carregados do localStorage.");
-             } catch (e) {
-                 console.error("Erro ao carregar dados do localStorage:", e);
-             }
+                  console.log("Dados carregados do localStorage.");
+              } catch (e) {
+                  console.error("Erro ao carregar dados do localStorage:", e);
+              }
          }
 
          // --- Setup Cores Partículas --- (Lógica mantida)
          function setupParticleColorSelector() {
-             if (!particleColorSelector) return;
-             particleColorSelector.innerHTML = '<label>Cor Partícula:</label>';
+              if (!particleColorSelector) return;
+              particleColorSelector.innerHTML = '<label>Cor Partícula:</label>';
 
-             Object.entries(PLAYER_PARTICLE_COLORS).forEach(([name, color]) => {
-                 const colorDiv = document.createElement('div');
-                 colorDiv.classList.add('color-option');
-                 colorDiv.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-                 colorDiv.dataset.color = JSON.stringify(color);
-                 colorDiv.title = name.charAt(0).toUpperCase() + name.slice(1);
+              Object.entries(PLAYER_PARTICLE_COLORS).forEach(([name, color]) => {
+                  const colorDiv = document.createElement('div');
+                  colorDiv.classList.add('color-option');
+                  colorDiv.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                  colorDiv.dataset.color = JSON.stringify(color);
+                  colorDiv.title = name.charAt(0).toUpperCase() + name.slice(1);
 
-                 if (JSON.stringify(color) === JSON.stringify(playerParticleColor)) {
-                     colorDiv.classList.add('selected');
-                 }
+                  if (JSON.stringify(color) === JSON.stringify(playerParticleColor)) {
+                      colorDiv.classList.add('selected');
+                  }
 
-                 colorDiv.onclick = () => {
-                     playerParticleColor = color;
-                     document.querySelectorAll('#particleColorSelector .color-option').forEach(el => el.classList.remove('selected'));
-                     colorDiv.classList.add('selected');
-                     saveGameData();
-                     console.log("Cor da partícula alterada para:", name);
-                 };
-                 particleColorSelector.appendChild(colorDiv);
-             });
+                  colorDiv.onclick = () => {
+                      playerParticleColor = color;
+                      document.querySelectorAll('#particleColorSelector .color-option').forEach(el => el.classList.remove('selected'));
+                      colorDiv.classList.add('selected');
+                      saveGameData();
+                      console.log("Cor da partícula alterada para:", name);
+                  };
+                  particleColorSelector.appendChild(colorDiv);
+              });
          }
 
          // --- Funções Utilitárias ---
@@ -1987,697 +2049,770 @@
 
          // --- Classes do Jogo ---
          class Player {
-             constructor() {
-                 this.baseSize = constrain(height * 0.06, 30, 50);
-                 this.w = this.baseSize;
-                 this.h = this.baseSize;
-                 this.x = width * 0.15;
-                 this.groundLevel = height - groundMargin;
-                 this.y = this.groundLevel - this.h / 2;
-                 this.velocity = 0;
-                 this.gravity = height * 0.0011;
-                 this.jumpForce = -height * 0.025;
-                 this.jumpsLeft = 2;
-                 this.onGround = true;
-                 this.angle = 0;
-                 this.rotationSpeed = 0;
-                 this.skinImage = null;
-                 this.color = [0, 220, 255];
-                 this.face = '^_^';
-                 this.hitboxPadding = 2; // *** COLISÃO PRECISA ***
-                 this.isFlashing = false;
-                 this.flashTimer = 0;
-                 // Squash & Stretch
-                 this.squashFactor = 1.0;
-                 this.targetSquashFactor = 1.0;
-                 this.squashSpeed = 0.2;
-                 this.idleBobTimer = random(TWO_PI);
-                 this.idleBobAmount = 1.5;
-             }
+              constructor() {
+                  this.baseSize = constrain(height * 0.06, 30, 50);
+                  this.w = this.baseSize;
+                  this.h = this.baseSize;
+                  this.x = width * 0.15;
+                  this.groundLevel = height - groundMargin;
+                  this.y = this.groundLevel - this.h / 2;
+                  this.velocity = 0;
+                  this.gravity = height * 0.0011;
+                  this.jumpForce = -height * 0.025;
+                  this.jumpsLeft = 2;
+                  this.onGround = true;
+                  this.angle = 0;
+                  this.rotationSpeed = 0;
+                  this.skinImage = null;
+                  this.color = [0, 220, 255];
+                  this.face = '^_^';
+                  this.hitboxPadding = 2; // *** COLISÃO PRECISA ***
+                  this.isFlashing = false;
+                  this.flashTimer = 0;
+                  // Squash & Stretch
+                  this.squashFactor = 1.0;
+                  this.targetSquashFactor = 1.0;
+                  this.squashSpeed = 0.2;
+                  this.idleBobTimer = random(TWO_PI);
+                  this.idleBobAmount = 1.5;
+              }
 
-             setAppearance(skinData) {
-                 this.color = skinData.color || [255,0,0];
-                 this.face = skinData.face || 'ERR';
-                  this.skinImage = (skinData.loadedImg && skinData.loadedImg.width > 0) ? skinData.loadedImg : null;
-             }
+              setAppearance(skinData) {
+                  this.color = skinData.color || [255,0,0];
+                  this.face = skinData.face || 'ERR';
+                   this.skinImage = (skinData.loadedImg && skinData.loadedImg.width > 0) ? skinData.loadedImg : null;
+              }
 
-             isInvincible() {
-                 return this.isFlashing && this.flashTimer > 0;
-             }
+              isInvincible() {
+                  return this.isFlashing && this.flashTimer > 0;
+              }
 
-             update() {
-                 this.groundLevel = height - groundMargin;
-                 let wasOnGround = this.onGround;
+              update() {
+                  this.groundLevel = height - groundMargin;
+                  let wasOnGround = this.onGround;
 
-                 // Squash Factor Lerp
-                 this.squashFactor = lerp(this.squashFactor, this.targetSquashFactor, this.squashSpeed);
-                 if (abs(this.targetSquashFactor - 1.0) < 0.01 && abs(this.squashFactor - 1.0) > 0.01) {
-                     this.targetSquashFactor = 1.0;
-                     this.squashFactor = lerp(this.squashFactor, 1.0, this.squashSpeed * 0.5);
-                 }
-                 this.h = this.baseSize * sqrt(this.squashFactor);
-                 this.w = this.baseSize / sqrt(this.squashFactor);
+                  // Squash Factor Lerp
+                  this.squashFactor = lerp(this.squashFactor, this.targetSquashFactor, this.squashSpeed);
+                  if (abs(this.targetSquashFactor - 1.0) < 0.01 && abs(this.squashFactor - 1.0) > 0.01) {
+                        this.targetSquashFactor = 1.0;
+                        this.squashFactor = lerp(this.squashFactor, 1.0, this.squashSpeed * 0.5);
+                  }
+                  this.h = this.baseSize * sqrt(this.squashFactor);
+                  this.w = this.baseSize / sqrt(this.squashFactor);
 
-                 // Physics
-                 if (this.y + this.h / 2 < this.groundLevel || this.velocity < 0) {
-                     this.velocity += this.gravity;
-                      this.onGround = false;
-                 }
-                 this.y += this.velocity;
+                  // Physics
+                  if (this.y + this.h / 2 < this.groundLevel || this.velocity < 0) {
+                      this.velocity += this.gravity;
+                       this.onGround = false;
+                  }
+                  this.y += this.velocity;
 
-                 // Rotation
-                 if (!this.onGround) {
-                     this.rotationSpeed = this.velocity * 0.02;
-                      if(this.targetSquashFactor !== 1.0 && this.velocity > 0) {
-                           this.targetSquashFactor = 1.0;
-                      }
-                 } else {
-                     this.rotationSpeed = 0;
-                     this.angle = lerp(this.angle, 0, 0.2);
-                 }
-                 this.angle += this.rotationSpeed;
+                  // Rotation
+                  if (!this.onGround) {
+                      this.rotationSpeed = this.velocity * 0.02;
+                       if(this.targetSquashFactor !== 1.0 && this.velocity > 0) {
+                             this.targetSquashFactor = 1.0;
+                       }
+                  } else {
+                      this.rotationSpeed = 0;
+                      this.angle = lerp(this.angle, 0, 0.2);
+                  }
+                  this.angle += this.rotationSpeed;
 
-                 // Ground Check & Correction
-                 if (this.y + this.h / 2 >= this.groundLevel && this.velocity >= 0) {
-                     this.y = this.groundLevel - this.h / 2;
-                     this.velocity = 0;
+                  // Ground Check & Correction
+                  if (this.y + this.h / 2 >= this.groundLevel && this.velocity >= 0) {
+                       this.y = this.groundLevel - this.h / 2;
+                       this.velocity = 0;
 
-                     if (!wasOnGround) { // Just Landed
-                         this.angle = 0;
-                         this.rotationSpeed = 0;
-                         this.jumpsLeft = 2; // Reseta pulos
-                         this.onGround = true;
-                         // Landing Squash Effect
-                         this.targetSquashFactor = 0.7;
-                          setTimeout(() => { this.targetSquashFactor = 1.0; }, 80);
-                         // Landing Particles
-                         for(let i=0; i<8; i++){
-                             playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-2, 2), random(-1, -3), 30));
-                         }
-                     }
-                     this.onGround = true;
-                 }
-
-                 // Ceiling Check
-                 if (this.y - this.h / 2 < 0) {
-                     this.y = this.h / 2;
-                     if (this.velocity < 0) this.velocity = 0;
-                     this.targetSquashFactor = 0.8;
-                      setTimeout(() => { this.targetSquashFactor = 1.0; }, 100);
-                 }
-
-                 // Idle Bobbing
-                 if (this.onGround) {
-                     this.idleBobTimer += 0.1;
-                     if (!this.isFlashing) {
-                         if(this.velocity === 0) {
-                              this.y = (this.groundLevel - this.h / 2) + sin(this.idleBobTimer) * this.idleBobAmount;
-                         }
-                     }
-                 }
-
-                 // Movement Particles (Trail)
-                 if (!this.onGround && abs(this.velocity) > 1) {
-                     if (frameCount % 4 === 0) {
-                         let px = this.x - (this.w / 3 * (this.velocity > 0 ? -1 : 1));
-                         let py = this.y + this.h / 3;
-                         let vx = random(-0.5, 0.5) - (this.velocity * 0.01);
-                         let vy = random(0.5, 1.5);
-                          playerParticles.push(new PlayerParticle(px, py, vx, vy));
-                     }
-                 }
-
-                 // Flash Timer (Invincibility)
-                 if (this.isFlashing) {
-                     this.flashTimer--;
-                     if (this.flashTimer <= 0) {
-                         this.isFlashing = false;
-                     }
-                 }
-             }
-
-             jump() {
-                 if (this.jumpsLeft > 0) {
-                     let currentJumpForce = this.jumpForce;
-                     this.velocity = currentJumpForce;
-                     this.onGround = false;
-                     this.jumpsLeft--;
-                     // Jump Stretch Effect
-                     this.targetSquashFactor = 1.4;
-                     // Jump Particles
-                     let numParticles = (this.jumpsLeft === 1) ? 6 : 8;
-                     for(let i=0; i < numParticles; i++){
-                         playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-1.5, 1.5), random(1, 3.5), 40));
-                     }
-                 }
-             }
-
-
-             flash(duration = 15) {
-                  this.isFlashing = true;
-                  this.flashTimer = duration;
-             }
-
-             show(forceOpaque = false) {
-                  push();
-                  translate(this.x, this.y);
-                  rotate(this.angle);
-                  rectMode(CENTER);
-
-                  // Flash Logic
-                  let showPlayer = true;
-                  if (this.isFlashing && !forceOpaque) {
-                       showPlayer = floor(this.flashTimer / 4) % 2 === 0;
+                       if (!wasOnGround) { // Just Landed
+                           this.angle = 0;
+                           this.rotationSpeed = 0;
+                           this.jumpsLeft = 2; // Reseta pulos
+                           this.onGround = true;
+                           // Landing Squash Effect
+                           this.targetSquashFactor = 0.7;
+                            setTimeout(() => { this.targetSquashFactor = 1.0; }, 80);
+                           // Landing Particles
+                           for(let i=0; i<8; i++){
+                                playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-2, 2), random(-1, -3), 30));
+                           }
+                       }
+                       this.onGround = true;
                   }
 
-                  // Efeito de Luz Branca (Reviver)
-                   if (reviveLightTimer > 0) {
-                       let lightAlpha = map(reviveLightTimer, 0, 35, 0, 150);
-                       let lightSizeFactor = map(reviveLightTimer, 35, 0, 2.5, 3.5);
-                       fill(255, 255, 255, lightAlpha * (showPlayer ? 1 : 0.5));
-                       noStroke();
-                       ellipse(0, 0, this.w * lightSizeFactor, this.h * lightSizeFactor);
-                   }
+                  // Ceiling Check
+                  if (this.y - this.h / 2 < 0) {
+                       this.y = this.h / 2;
+                       if (this.velocity < 0) this.velocity = 0;
+                       this.targetSquashFactor = 0.8;
+                        setTimeout(() => { this.targetSquashFactor = 1.0; }, 100);
+                  }
 
-
-                  if (showPlayer) {
-                       if (this.skinImage) {
-                           imageMode(CENTER);
-                           image(this.skinImage, 0, 0, this.w, this.h);
-                       } else {
-                           let fillColor = color(255,0,0);
-                           if (this.color && this.color.length >= 3) {
-                                fillColor = color(this.color[0], this.color[1], this.color[2], this.color.length > 3 ? this.color[3] : 255);
+                  // Idle Bobbing
+                  if (this.onGround) {
+                       this.idleBobTimer += 0.1;
+                       if (!this.isFlashing) {
+                           if(this.velocity === 0) {
+                                 this.y = (this.groundLevel - this.h / 2) + sin(this.idleBobTimer) * this.idleBobAmount;
                            }
-                           fill(fillColor);
-                           stroke(0); strokeWeight(2);
-                           rect(0, 0, this.w, this.h, this.baseSize * 0.1);
-
-                           fill(0); noStroke(); textAlign(CENTER, CENTER);
-                           textSize(this.w * 0.4);
-                           text(this.face || '?', 0, this.h * 0.05);
                        }
                   }
-                  pop();
-             }
 
-             reset() {
-                 this.groundLevel = height - groundMargin;
-                 this.baseSize = constrain(height * 0.06, 30, 50);
-                 this.w = this.baseSize;
-                 this.h = this.baseSize;
-                 this.y = this.groundLevel - this.h / 2;
-                 this.velocity = 0;
-                 this.onGround = true;
-                 this.jumpsLeft = 2;
-                 this.angle = 0;
-                 this.rotationSpeed = 0;
-                 this.isFlashing = false;
-                 this.flashTimer = 0;
-                 this.squashFactor = 1.0;
-                 this.targetSquashFactor = 1.0;
-                 this.idleBobTimer = random(TWO_PI);
+                  // Movement Particles (Trail)
+                  if (!this.onGround && abs(this.velocity) > 1) {
+                       if (frameCount % 4 === 0) {
+                           let px = this.x - (this.w / 3 * (this.velocity > 0 ? -1 : 1));
+                           let py = this.y + this.h / 3;
+                           let vx = random(-0.5, 0.5) - (this.velocity * 0.01);
+                           let vy = random(0.5, 1.5);
+                            playerParticles.push(new PlayerParticle(px, py, vx, vy));
+                       }
+                  }
+
+                  // Flash Timer (Invincibility)
+                  if (this.isFlashing) {
+                        this.flashTimer--;
+                        if (this.flashTimer <= 0) {
+                            this.isFlashing = false;
+                        }
+                  }
+              }
+
+              jump() {
+                  if (this.jumpsLeft > 0) {
+                      let currentJumpForce = this.jumpForce;
+                      this.velocity = currentJumpForce;
+                      this.onGround = false;
+                      this.jumpsLeft--;
+                      // Jump Stretch Effect
+                      this.targetSquashFactor = 1.4;
+                      // Jump Particles
+                      let numParticles = (this.jumpsLeft === 1) ? 6 : 8;
+                      for(let i=0; i < numParticles; i++){
+                           playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-1.5, 1.5), random(1, 3.5), 40));
+                      }
+                  }
+              }
+
+
+              flash(duration = 15) {
+                   this.isFlashing = true;
+                   this.flashTimer = duration;
+              }
+
+              show(forceOpaque = false) {
+                   push();
+                   translate(this.x, this.y);
+                   rotate(this.angle);
+                   rectMode(CENTER);
+
+                   // Flash Logic
+                   let showPlayer = true;
+                   if (this.isFlashing && !forceOpaque) {
+                        showPlayer = floor(this.flashTimer / 4) % 2 === 0;
+                   }
+
+                   // Efeito de Luz Branca (Reviver)
+                    if (reviveLightTimer > 0) {
+                         let lightAlpha = map(reviveLightTimer, 0, 40, 0, 180); // Mais sutil
+                         let lightSizeFactor = map(reviveLightTimer, 40, 0, 2.0, 3.0);
+                         fill(255, 255, 255, lightAlpha * (showPlayer ? 1 : 0.5));
+                         noStroke();
+                         ellipse(0, 0, this.w * lightSizeFactor, this.h * lightSizeFactor);
+                    }
+
+
+                   if (showPlayer) {
+                        if (this.skinImage) {
+                            imageMode(CENTER);
+                            image(this.skinImage, 0, 0, this.w, this.h);
+                        } else {
+                            let fillColor = color(255,0,0);
+                            if (this.color && this.color.length >= 3) {
+                                 fillColor = color(this.color[0], this.color[1], this.color[2], this.color.length > 3 ? this.color[3] : 255);
+                            }
+                            fill(fillColor);
+                            stroke(0); strokeWeight(2);
+                            rect(0, 0, this.w, this.h, this.baseSize * 0.1);
+
+                            fill(0); noStroke(); textAlign(CENTER, CENTER);
+                            textSize(this.w * 0.4);
+                            text(this.face || '?', 0, this.h * 0.05);
+                        }
+                   }
+                   pop();
+              }
+
+              reset() {
+                  this.groundLevel = height - groundMargin;
+                  this.baseSize = constrain(height * 0.06, 30, 50);
+                  this.w = this.baseSize;
+                  this.h = this.baseSize;
+                  this.y = this.groundLevel - this.h / 2;
+                  this.velocity = 0;
+                  this.onGround = true;
+                  this.jumpsLeft = 2;
+                  this.angle = 0;
+                  this.rotationSpeed = 0;
+                  this.isFlashing = false;
+                  this.flashTimer = 0;
+                  this.squashFactor = 1.0;
+                  this.targetSquashFactor = 1.0;
+                  this.idleBobTimer = random(TWO_PI);
 
                   if (playerSkins && playerSkins[selectedSkinKey]) {
-                       this.setAppearance(playerSkins[selectedSkinKey]);
+                        this.setAppearance(playerSkins[selectedSkinKey]);
                   } else {
-                       this.setAppearance({ name: "Erro", rarity: "Comum", color: [255,0,0], face: 'ERR', unlockLevel: 1, loadedImg: null });
+                        this.setAppearance({ name: "Erro", rarity: "Comum", color: [255,0,0], face: 'ERR', unlockLevel: 1, loadedImg: null });
                   }
-             }
+              }
          }
 
          // Obstacle Class com mais tipos
          class Obstacle {
-             constructor(level) {
-                 this.level = level;
-                 this.groundLevel = height - groundMargin;
+              constructor(level) {
+                  this.level = level;
+                  this.groundLevel = height - groundMargin;
 
-                 this.baseSpeed = width * 0.007;
-                 this.speedIncreasePerLevel = width * 0.0005;
-                 this.speed = this.baseSpeed + (this.level * this.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
-                 this.speed = max(this.speed, width * 0.005);
+                  this.baseSpeed = width * 0.007;
+                  this.speedIncreasePerLevel = width * 0.0005;
+                  this.speed = this.baseSpeed + (this.level * this.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
+                  this.speed = max(this.speed, width * 0.005);
 
-                 this.x = width + random(50, 150);
+                  this.x = width + random(50, 150);
 
-                 let pSize = (player && player.baseSize) ? player.baseSize : constrain(height * 0.06, 30, 50);
-                 this.size = random(pSize * 0.8, pSize * 1.3); // Tamanho base (altura spike, largura block, diâmetro circle)
-                 this.blockHeight = random(pSize * 0.8, pSize * 1.5); // Altura específica do bloco
+                  let pSize = (player && player.baseSize) ? player.baseSize : constrain(height * 0.06, 30, 50);
+                  this.size = random(pSize * 0.8, pSize * 1.3); // Tamanho base (altura spike, largura block, diâmetro circle)
+                  this.blockHeight = random(pSize * 0.8, pSize * 1.5); // Altura específica do bloco
 
-                 this.verticalSpeed = 0;
-                 this.hitboxPadding = 1; // *** COLISÃO PRECISA ***
-                 this.color = color(255, 50, 50); // Cor padrão (vermelho spike)
+                  this.verticalSpeed = 0;
+                  this.hitboxPadding = 1; // *** COLISÃO PRECISA ***
+                  this.color = color(255, 50, 50); // Cor padrão (vermelho spike)
 
-                 // Define o tipo (spike, block, circle, triangle_up, rectangle_tall)
-                 this.type = 'spike'; // Default
-                 let typeRoll = random();
-                 let blockChance = 0.3 + level * 0.01; // Aumenta chance com nível
-                 let circleChance = 0.15 + level * 0.01;
-                 let triangleChance = 0.1 + level * 0.015; // Triângulos mais comuns em níveis altos
-                 let tallRectChance = 0.05 + level * 0.01;
+                  // Define o tipo (spike, block, circle, triangle_up, rectangle_tall)
+                  this.type = 'spike'; // Default
+                  let typeRoll = random();
+                  let blockChance = 0.3 + level * 0.01; // Aumenta chance com nível
+                  let circleChance = 0.15 + level * 0.01;
+                  let triangleChance = 0.1 + level * 0.015; // Triângulos mais comuns em níveis altos
+                  let tallRectChance = 0.05 + level * 0.01;
 
-                 if (level >= 2) {
-                    if (typeRoll < tallRectChance) { this.type = 'rectangle_tall'; }
-                    else if (typeRoll < tallRectChance + triangleChance) { this.type = 'triangle_up'; }
-                    else if (typeRoll < tallRectChance + triangleChance + circleChance) { this.type = 'circle'; }
-                    else if (typeRoll < tallRectChance + triangleChance + circleChance + blockChance) { this.type = 'block'; }
-                    // else: continua 'spike'
-                 }
+                  if (level >= 2) {
+                       if (typeRoll < tallRectChance) { this.type = 'rectangle_tall'; }
+                       else if (typeRoll < tallRectChance + triangleChance) { this.type = 'triangle_up'; }
+                       else if (typeRoll < tallRectChance + triangleChance + circleChance) { this.type = 'circle'; }
+                       else if (typeRoll < tallRectChance + triangleChance + circleChance + blockChance) { this.type = 'block'; }
+                       // else: continua 'spike'
+                  }
 
-                 // Propriedades específicas por tipo
-                 switch (this.type) {
-                     case 'block':
-                         this.color = color(200, 200, 220);
-                         this.size = random(pSize * 1.0, pSize * 1.8); // Largura
-                         this.y = this.groundLevel - this.blockHeight;
-                         // Movimento vertical para blocos (chance aumenta com nível)
-                         if (level >= 3 && random() < (0.2 + level * 0.02)) {
-                             this.verticalSpeed = random(height * 0.002, height * 0.004) * (random() > 0.5 ? 1 : -1);
-                             this.y = this.groundLevel - this.blockHeight - random(height * 0.05, height * 0.15);
-                         }
-                         break;
-                     case 'circle':
-                         this.color = color(50, 200, 50);
-                         this.size = random(pSize * 0.7, pSize * 1.2); // Diâmetro
-                         this.y = this.groundLevel - this.size / 2 - random(0, pSize * 0.3); // Flutua um pouco
-                         // Movimento vertical para círculos (chance aumenta com nível)
-                         if (level >= 4 && random() < (0.15 + level * 0.02)) {
-                            this.verticalSpeed = random(height * 0.001, height * 0.003) * (random() > 0.5 ? 1 : -1);
-                            this.y = this.groundLevel - this.size / 2 - random(height * 0.05, height * 0.1);
-                         }
-                         break;
-                    case 'triangle_up':
-                        this.color = color(255, 100 + random(50), 0); // Laranja/Amarelo
-                        this.y = this.groundLevel; // Base no chão
-                        this.size = random(pSize * 0.8, pSize * 1.3); // Altura do triângulo
-                        break;
-                    case 'rectangle_tall':
-                        this.color = color(180, 180, 200); // Cinza claro diferente do bloco
-                        this.size = random(pSize * 0.4, pSize * 0.7); // Largura (fino)
-                        this.blockHeight = random(pSize * 1.5, pSize * 2.5); // Altura (bem alto)
-                        this.y = this.groundLevel - this.blockHeight;
-                        break;
-                     case 'spike': // Default
-                         this.color = color(255, 50 + random(50), 50 + random(50));
-                         this.y = this.groundLevel;
-                         this.size = random(pSize * 0.9, pSize * 1.4); // Altura
-                         break;
-                 }
+                  // Propriedades específicas por tipo
+                  switch (this.type) {
+                       case 'block':
+                            this.color = color(200, 200, 220);
+                            this.size = random(pSize * 1.0, pSize * 1.8); // Largura
+                            this.y = this.groundLevel - this.blockHeight;
+                            // Movimento vertical para blocos (chance aumenta com nível)
+                            if (level >= 3 && random() < (0.2 + level * 0.02)) {
+                                 this.verticalSpeed = random(height * 0.002, height * 0.004) * (random() > 0.5 ? 1 : -1);
+                                 this.y = this.groundLevel - this.blockHeight - random(height * 0.05, height * 0.15);
+                            }
+                            break;
+                       case 'circle':
+                            this.color = color(50, 200, 50);
+                            this.size = random(pSize * 0.7, pSize * 1.2); // Diâmetro
+                            this.y = this.groundLevel - this.size / 2 - random(0, pSize * 0.3); // Flutua um pouco
+                            // Movimento vertical para círculos (chance aumenta com nível)
+                            if (level >= 4 && random() < (0.15 + level * 0.02)) {
+                               this.verticalSpeed = random(height * 0.001, height * 0.003) * (random() > 0.5 ? 1 : -1);
+                               this.y = this.groundLevel - this.size / 2 - random(height * 0.05, height * 0.1);
+                            }
+                            break;
+                      case 'triangle_up':
+                            this.color = color(255, 100 + random(50), 0); // Laranja/Amarelo
+                            this.y = this.groundLevel; // Base no chão
+                            this.size = random(pSize * 0.8, pSize * 1.3); // Altura do triângulo
+                            break;
+                       case 'rectangle_tall':
+                            this.color = color(180, 180, 200); // Cinza claro diferente do bloco
+                            this.size = random(pSize * 0.4, pSize * 0.7); // Largura (fino)
+                            this.blockHeight = random(pSize * 1.5, pSize * 2.5); // Altura (bem alto)
+                            this.y = this.groundLevel - this.blockHeight;
+                            break;
+                       case 'spike': // Default
+                            this.color = color(255, 50 + random(50), 50 + random(50));
+                            this.y = this.groundLevel;
+                            this.size = random(pSize * 0.9, pSize * 1.4); // Altura
+                            break;
+                  }
 
-                 // Chance Rara de ser Maior (aumenta com nível)
-                 if (level >= 4 && random() < (0.08 + level * 0.01)) {
-                      let scaleFactor = random(1.3, 1.8);
-                      this.size *= scaleFactor;
-                      if (this.type === 'block' || this.type === 'rectangle_tall') {
-                          this.blockHeight *= scaleFactor * 0.8; // Aumenta altura proporcionalmente menos
-                          if (this.verticalSpeed === 0) this.y = this.groundLevel - this.blockHeight; // Recalcula Y estático
-                      }
-                      // Ajustar Y para círculo estático maior se necessário
-                 }
-             }
+                  // Chance Rara de ser Maior (aumenta com nível)
+                  if (level >= 4 && random() < (0.08 + level * 0.01)) {
+                       let scaleFactor = random(1.3, 1.8);
+                       this.size *= scaleFactor;
+                       if (this.type === 'block' || this.type === 'rectangle_tall') {
+                             this.blockHeight *= scaleFactor * 0.8; // Aumenta altura proporcionalmente menos
+                             if (this.verticalSpeed === 0) this.y = this.groundLevel - this.blockHeight; // Recalcula Y estático
+                       }
+                       // Ajustar Y para círculo estático maior se necessário
+                  }
+              }
 
-             update() {
-                 this.x -= this.speed;
+              update() {
+                  this.x -= this.speed;
 
-                 // Movimento vertical (Blocos e Círculos Móveis)
-                 if (this.verticalSpeed !== 0) {
-                     this.y += this.verticalSpeed;
-                     const topLimit = height * 0.3;
-                     let bottomLimit;
-                      if (this.type === 'block' || this.type === 'rectangle_tall') bottomLimit = this.groundLevel - this.blockHeight;
-                      else if (this.type === 'circle') bottomLimit = this.groundLevel - this.size / 2;
-                      else bottomLimit = this.groundLevel; // Should not happen for moving spikes
+                  // Movimento vertical (Blocos e Círculos Móveis)
+                  if (this.verticalSpeed !== 0) {
+                        this.y += this.verticalSpeed;
+                        const topLimit = height * 0.3;
+                        let bottomLimit;
+                        if (this.type === 'block' || this.type === 'rectangle_tall') bottomLimit = this.groundLevel - this.blockHeight;
+                        else if (this.type === 'circle') bottomLimit = this.groundLevel - this.size / 2;
+                        else bottomLimit = this.groundLevel; // Should not happen for moving spikes
 
-                      let currentTop = this.y - (this.type === 'circle' ? this.size / 2 : (this.type === 'spike' || this.type === 'triangle_up' ? this.size : 0) ); // Topo real
-                      let currentBottom = this.y + (this.type === 'block' || this.type === 'rectangle_tall' ? 0 : this.size / 2 ); // Base real
+                        let currentTop = this.y - (this.type === 'circle' ? this.size / 2 : (this.type === 'spike' || this.type === 'triangle_up' ? this.size : 0) ); // Topo real
+                        let currentBottom = this.y + (this.type === 'block' || this.type === 'rectangle_tall' ? 0 : this.size / 2 ); // Base real
 
 
-                      if (currentTop < topLimit || this.y > bottomLimit) { // Bateu no teto ou no "chão virtual"
-                        // Correção de posição
-                        if (this.type === 'block' || this.type === 'rectangle_tall'){ this.y = constrain(this.y, topLimit, bottomLimit); }
-                        else if (this.type === 'circle') { this.y = constrain(this.y, topLimit + this.size / 2, bottomLimit + this.size / 2); }
+                        if (currentTop < topLimit || this.y > bottomLimit) { // Bateu no teto ou no "chão virtual"
+                            // Correção de posição
+                            if (this.type === 'block' || this.type === 'rectangle_tall'){ this.y = constrain(this.y, topLimit, bottomLimit); }
+                            else if (this.type === 'circle') { this.y = constrain(this.y, topLimit + this.size / 2, bottomLimit + this.size / 2); }
 
-                        this.verticalSpeed *= -1; // Inverte direção
-                     }
-                 }
-             }
+                            this.verticalSpeed *= -1; // Inverte direção
+                        }
+                  }
+              }
 
-             show() {
-                 push();
-                 try { fill(this.color); } catch (e) { fill(255,0,0); } // Fallback color
-                 stroke(0);
-                 strokeWeight(1.5);
+              show() {
+                  push();
+                  try { fill(this.color); } catch (e) { fill(255,0,0); } // Fallback color
+                  stroke(0);
+                  strokeWeight(1.5);
 
-                 translate(this.x, 0); // Translada só no X para facilitar desenho no chão
+                  translate(this.x, 0); // Translada só no X para facilitar desenho no chão
 
-                 switch (this.type) {
-                     case 'spike':
-                         triangle(-this.size / 2.5, this.y, this.size / 2.5, this.y, 0, this.y - this.size);
-                         break;
-                    case 'triangle_up': // Espinho para cima
-                         triangle(-this.size / 2.5, this.y, this.size / 2.5, this.y, 0, this.y - this.size);
-                        break;
-                     case 'block':
-                         rectMode(CORNER);
-                         rect(-this.size / 2, this.y, this.size, this.blockHeight, 3); // Usa this.y (calculado no update)
-                         break;
-                    case 'rectangle_tall':
-                         rectMode(CORNER);
-                         rect(-this.size / 2, this.y, this.size, this.blockHeight, 2);
-                         break;
-                     case 'circle':
-                         ellipseMode(CENTER);
-                         ellipse(0, this.y, this.size, this.size); // Usa this.y (calculado no update)
-                         break;
-                 }
-                 pop();
-             }
+                  switch (this.type) {
+                       case 'spike':
+                            triangle(-this.size / 2.5, this.y, this.size / 2.5, this.y, 0, this.y - this.size);
+                            break;
+                      case 'triangle_up': // Espinho para cima
+                            triangle(-this.size / 2.5, this.y, this.size / 2.5, this.y, 0, this.y - this.size);
+                            break;
+                       case 'block':
+                            rectMode(CORNER);
+                            rect(-this.size / 2, this.y, this.size, this.blockHeight, 3); // Usa this.y (calculado no update)
+                            break;
+                       case 'rectangle_tall':
+                            rectMode(CORNER);
+                            rect(-this.size / 2, this.y, this.size, this.blockHeight, 2);
+                            break;
+                       case 'circle':
+                            ellipseMode(CENTER);
+                            ellipse(0, this.y, this.size, this.size); // Usa this.y (calculado no update)
+                            break;
+                  }
+                  pop();
+              }
 
-             offscreen() {
-                 return (this.x + this.size) < 0; // Usa size como largura máxima aproximada
-             }
+              offscreen() {
+                  return (this.x + this.size) < 0; // Usa size como largura máxima aproximada
+              }
 
-             hits(player) {
-                 if (!player || player.isInvincible()) return false;
+              hits(player) {
+                  if (!player || player.isInvincible()) return false;
 
-                 let pL = player.x - player.w / 2 + player.hitboxPadding;
-                 let pR = player.x + player.w / 2 - player.hitboxPadding;
-                 let pT = player.y - player.h / 2 + player.hitboxPadding;
-                 let pB = player.y + player.h / 2 - player.hitboxPadding;
+                  let pL = player.x - player.w / 2 + player.hitboxPadding;
+                  let pR = player.x + player.w / 2 - player.hitboxPadding;
+                  let pT = player.y - player.h / 2 + player.hitboxPadding;
+                  let pB = player.y + player.h / 2 - player.hitboxPadding;
 
-                 let oL, oR, oT, oB;
+                  let oL, oR, oT, oB;
 
-                 if (this.type === 'circle') {
-                    // Colisão Círculo-Retângulo (Aproximação AABB) - mais simples e geralmente ok
-                    oL = this.x - this.size / 2 + this.hitboxPadding;
-                    oR = this.x + this.size / 2 - this.hitboxPadding;
-                    oT = this.y - this.size / 2 + this.hitboxPadding;
-                    oB = this.y + this.size / 2 - this.hitboxPadding;
-                 } else if (this.type === 'spike' || this.type === 'triangle_up') {
-                    // Hitbox AABB simplificada para triângulos (meio da base até o topo)
-                     oL = this.x - this.size / 3 + this.hitboxPadding; // Base mais larga na hitbox
-                     oR = this.x + this.size / 3 - this.hitboxPadding;
-                     oT = this.y - this.size + this.hitboxPadding * 2; // Começa um pouco abaixo do topo real
-                     oB = this.y - this.hitboxPadding;
-                 } else { // block ou rectangle_tall
-                     oL = this.x - this.size / 2 + this.hitboxPadding;
-                     oR = this.x + this.size / 2 - this.hitboxPadding;
-                     oT = this.y + this.hitboxPadding; // Topo do bloco
-                     oB = this.y + this.blockHeight - this.hitboxPadding; // Base do bloco
-                 }
+                  if (this.type === 'circle') {
+                      // Colisão Círculo-Retângulo (Aproximação AABB) - mais simples e geralmente ok
+                      oL = this.x - this.size / 2 + this.hitboxPadding;
+                      oR = this.x + this.size / 2 - this.hitboxPadding;
+                      oT = this.y - this.size / 2 + this.hitboxPadding;
+                      oB = this.y + this.size / 2 - this.hitboxPadding;
+                  } else if (this.type === 'spike' || this.type === 'triangle_up') {
+                      // Hitbox AABB simplificada para triângulos (meio da base até o topo)
+                       oL = this.x - this.size / 3 + this.hitboxPadding; // Base mais larga na hitbox
+                       oR = this.x + this.size / 3 - this.hitboxPadding;
+                       oT = this.y - this.size + this.hitboxPadding * 2; // Começa um pouco abaixo do topo real
+                       oB = this.y - this.hitboxPadding;
+                  } else { // block ou rectangle_tall
+                       oL = this.x - this.size / 2 + this.hitboxPadding;
+                       oR = this.x + this.size / 2 - this.hitboxPadding;
+                       oT = this.y + this.hitboxPadding; // Topo do bloco
+                       oB = this.y + this.blockHeight - this.hitboxPadding; // Base do bloco
+                  }
 
-                 // AABB Check
-                 if (pR > oL && pL < oR && pB > oT && pT < oB) {
-                     return true;
-                 }
-                 return false;
-             }
+                  // AABB Check
+                  if (pR > oL && pL < oR && pB > oT && pT < oB) {
+                       return true;
+                  }
+                  return false;
+              }
          }
 
          // Classe Boss Atualizada
          class Boss {
-             constructor(img, level = 1) { // Recebe nível do boss
-                 this.img = img;
-                 this.level = level; // Armazena o nível do boss
-                 this.size = constrain(width * 0.15, 80, 150);
-                 this.x = width + this.size;
-                 this.y = height / 3;
-                 this.speedX = -width * 0.002;
-                 this.speedY = height * 0.003 + (level * height * 0.0002); // Aumenta velocidade Y com nível
-                 this.state = 'entering';
-                 this.projectiles = []; // Renomeado de 'particles'
-                 this.attackCooldown = 0;
-                 // Dificuldade baseada no nível
-                 this.attackInterval = max(30, 90 - (level * 5)); // Diminui intervalo com nível (mín 30 frames)
-                 this.particleSpeed = width * (0.006 + (level * 0.0004)); // Aumenta velocidade projétil
-                 this.numParticlesMin = 1 + floor(level / 3); // Mais projéteis min com nível
-                 this.numParticlesMax = 3 + floor(level / 2); // Mais projéteis max com nível
+              constructor(img, level = 1) { // Recebe nível do boss
+                  this.img = img;
+                  this.level = level; // Armazena o nível do boss
+                  this.size = constrain(width * 0.15, 80, 150);
+                  this.x = width + this.size;
+                  this.y = height / 3;
+                  this.speedX = -width * 0.002;
+                  this.speedY = height * 0.003 + (level * height * 0.0002); // Aumenta velocidade Y com nível
+                  this.state = 'entering';
+                  this.projectiles = []; // Renomeado de 'particles'
+                  this.attackCooldown = 0;
 
-                 this.hitboxPadding = 5; // Colisão um pouco mais precisa com o corpo
-                 this.verticalRange = { top: height * 0.1, bottom: height - groundMargin - this.size * 0.8 };
-                 this.health = BOSS_MAX_HEALTH;
-                 console.log(`Boss Nível ${this.level} criado. Intervalo Atk: ${this.attackInterval}, Vel Proj: ${this.particleSpeed.toFixed(2)}`);
-             }
+                  // Dificuldade baseada no nível
+                  this.attackInterval = max(30, 90 - (level * 5)); // Diminui intervalo com nível (mín 30 frames)
+                  this.particleSpeed = width * (0.006 + (level * 0.0004)); // Aumenta velocidade projétil
+                  this.numParticlesMin = 1 + floor(level / 3); // Mais projéteis min com nível
+                  this.numParticlesMax = 3 + floor(level / 2); // Mais projéteis max com nível
 
-             update(player) {
-                 if (this.health <= 0) return;
+                  this.hitboxPadding = 5; // Colisão um pouco mais precisa com o corpo
+                  this.verticalRange = { top: height * 0.1, bottom: height - groundMargin - this.size * 0.8 };
 
-                 if (this.state === 'entering') {
-                     this.x += this.speedX;
-                     if (this.x <= width - this.size * 1.2) {
-                         this.x = width - this.size * 1.2;
-                         this.speedX = 0;
-                         this.state = 'attacking';
-                         this.attackCooldown = 60; // Primeiro ataque
-                     }
-                 } else if (this.state === 'attacking') {
-                     // Movimento Vertical
-                     this.y += this.speedY;
-                     if (this.y - this.size/2 < this.verticalRange.top || this.y + this.size/2 > this.verticalRange.bottom) {
-                         this.y = constrain(this.y, this.verticalRange.top + this.size/2, this.verticalRange.bottom - this.size/2);
-                         this.speedY *= -1;
-                     }
-                     // Ataque
-                     this.attackCooldown--;
-                     if (this.attackCooldown <= 0) {
-                         this.attack(player);
-                         this.attackCooldown = this.attackInterval + random(-15, 15); // Mais variação
-                     }
-                 }
-                 // Atualiza projéteis
-                  for (let i = this.projectiles.length - 1; i >= 0; i--) { this.projectiles[i].update(); }
-             }
+                  // NOVO: Vida escalável
+                  this.maxHealth = Math.max(1, 1 + Math.floor((level - 1) / 2)); // Vida = 1 + 1 a cada 2 níveis (1, 1, 2, 2, 3, 3...)
+                  this.health = this.maxHealth;
 
-             attack(player) {
-                 if (!player) return;
-                 let numProjectiles = floor(random(this.numParticlesMin, this.numParticlesMax + 1)); // Usa min/max por nível
-                  for (let i = 0; i < numProjectiles; i++) {
-                      let pX = this.x - this.size / 2;
-                      let pY = this.y + random(-this.size * 0.3, this.size * 0.3);
+                  // NOVO: Aviso de ataque
+                  this.warningTimer = 0; // Timer para o aviso
+                  this.warningPosition = null; // Onde o aviso vai aparecer
+                  this.warningSize = player ? player.baseSize * 1.8 : 60; // Tamanho do aviso
 
-                      // Mira menos precisa (mantido)
-                      let aimErrorX = player.w * random(-0.9, 0.9); // Aumenta erro ligeiramente
-                      let aimErrorY = player.h * random(-0.9, 0.9);
-                      let targetX = player.x + aimErrorX;
-                      let targetY = player.y + aimErrorY;
-                      let angle = atan2(targetY - pY, targetX - pX);
 
-                      let speedVariation = random(0.8, 1.2); // Mantém variação de velocidade
-                      let pVX = cos(angle) * this.particleSpeed * speedVariation;
-                      let pVY = sin(angle) * this.particleSpeed * speedVariation;
+                  console.log(`Boss Nível ${this.level} criado. Vida: ${this.maxHealth}, Intervalo Atk: ${this.attackInterval}, Vel Proj: ${this.particleSpeed.toFixed(2)}`);
+              }
 
-                      // Cria BossProjectile com forma aleatória
-                      this.projectiles.push(new BossProjectile(pX, pY, pVX, pVY));
+              update(player) {
+                  if (this.health <= 0) return;
+
+                  if (this.state === 'entering') {
+                      this.x += this.speedX;
+                      if (this.x <= width - this.size * 1.2) {
+                          this.x = width - this.size * 1.2;
+                          this.speedX = 0;
+                          this.state = 'attacking';
+                          this.attackCooldown = 60; // Primeiro ataque
+                      }
+                  } else if (this.state === 'attacking') {
+                      // Movimento Vertical
+                      this.y += this.speedY;
+                      if (this.y - this.size/2 < this.verticalRange.top || this.y + this.size/2 > this.verticalRange.bottom) {
+                          this.y = constrain(this.y, this.verticalRange.top + this.size/2, this.verticalRange.bottom - this.size/2);
+                          this.speedY *= -1;
+                      }
+                      // Ataque (com aviso)
+                      this.attackCooldown--;
+
+                      // NOVO: Lógica de Aviso
+                      if (this.warningTimer > 0) {
+                          this.warningTimer--;
+                          if (this.warningTimer === 0 && this.warningPosition) {
+                              // Fim do aviso, dispara projéteis
+                              this.fireProjectiles(this.warningPosition);
+                              this.warningPosition = null; // Limpa aviso
+                          }
+                      }
+                      // Verifica se pode iniciar um novo ataque (cooldown e sem aviso ativo)
+                      else if (this.attackCooldown <= 0) {
+                          this.prepareAttack(player); // Prepara o aviso e o alvo
+                          this.attackCooldown = this.attackInterval + random(-15, 15); // Reinicia cooldown para o *próximo* ataque
+                      }
                   }
-             }
+                  // Atualiza projéteis (movido para fora da lógica de estado, mas apenas se boss existe)
+                   for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                        this.projectiles[i].update();
+                        // Remoção agora é feita em runGameScreen
+                   }
+              }
 
-             show() {
-                 if (this.health <= 0) return;
-                 push();
-                 if (this.img && this.img.width > 0) {
-                     imageMode(CENTER);
-                     image(this.img, this.x, this.y, this.size, this.size);
-                 } else { // Fallback
-                     fill(255, 0, 0, 200); stroke(0); strokeWeight(2);
-                     rectMode(CENTER); rect(this.x, this.y, this.size, this.size);
-                     fill(255); noStroke(); textSize(this.size * 0.2); // Texto menor
-                     textAlign(CENTER, CENTER); text(`BOSS ${this.level}`, this.x, this.y); // Mostra Nível
-                 }
-                 pop();
-                 // Projéteis são desenhados no draw principal
-             }
+              // NOVO: Prepara o ataque (define aviso)
+              prepareAttack(player) {
+                  if (!player || this.warningTimer > 0) return; // Só prepara se não houver aviso ativo
 
-             takeDamage(amount) {
-                 this.health -= amount;
-                 console.log(`Boss tomou ${amount} de dano. Vida restante: ${this.health}`);
-                 // Add damage effect? (flash red?)
-             }
+                  // Calcula posição alvo (com erro)
+                  let aimErrorX = player.w * random(-0.9, 0.9);
+                  let aimErrorY = player.h * random(-0.9, 0.9);
+                  let targetX = player.x + aimErrorX;
+                  let targetY = player.y + aimErrorY;
 
-             // Opcional: Colisão com corpo do Boss (pode ser irritante, desativado por padrão)
-             /*
-             hits(player) {
-                 if (!player || player.isInvincible() || this.health <= 0 || this.state === 'entering') return false;
-                 let pL = player.x - player.w / 2 + player.hitboxPadding;
-                 let pR = player.x + player.w / 2 - player.hitboxPadding;
-                 let pT = player.y - player.h / 2 + player.hitboxPadding;
-                 let pB = player.y + player.h / 2 - player.hitboxPadding;
-                 let oL = this.x - this.size / 2 + this.hitboxPadding;
-                 let oR = this.x + this.size / 2 - this.hitboxPadding;
-                 let oT = this.y - this.size / 2 + this.hitboxPadding;
-                 let oB = this.y + this.size / 2 - this.hitboxPadding;
-                 return (pR > oL && pL < oR && pB > oT && pT < oB);
-             }
-             */
+                  // Define a posição e o timer do aviso
+                  this.warningPosition = { x: targetX, y: targetY };
+                  this.warningTimer = BOSS_ATTACK_WARNING_DURATION; // Inicia contagem do aviso
+
+                  console.log(`Boss preparando ataque em (${targetX.toFixed(0)}, ${targetY.toFixed(0)})`);
+              }
+
+              // NOVO: Dispara projéteis (chamado após o aviso)
+              fireProjectiles(targetPos) {
+                  let numProjectiles = floor(random(this.numParticlesMin, this.numParticlesMax + 1));
+                   for (let i = 0; i < numProjectiles; i++) {
+                       let pX = this.x - this.size / 2;
+                       let pY = this.y + random(-this.size * 0.3, this.size * 0.3);
+
+                       // Mira no centro da área de aviso com pequena variação
+                       let angle = atan2(targetPos.y - pY + random(-this.warningSize*0.2, this.warningSize*0.2),
+                                        targetPos.x - pX + random(-this.warningSize*0.2, this.warningSize*0.2));
+
+                       let speedVariation = random(0.85, 1.15); // Menos variação talvez?
+                       let pVX = cos(angle) * this.particleSpeed * speedVariation;
+                       let pVY = sin(angle) * this.particleSpeed * speedVariation;
+
+                       this.projectiles.push(new BossProjectile(pX, pY, pVX, pVY));
+                   }
+                   console.log(`Boss disparou ${numProjectiles} projéteis.`);
+              }
+
+              // Desenha apenas o corpo do Boss
+              show() {
+                  if (this.health <= 0) return;
+                  push();
+                  if (this.img && this.img.width > 0) {
+                      imageMode(CENTER);
+                      image(this.img, this.x, this.y, this.size, this.size);
+                  } else { // Fallback
+                      fill(255, 0, 0, 200); stroke(0); strokeWeight(2);
+                      rectMode(CENTER); rect(this.x, this.y, this.size, this.size);
+                      fill(255); noStroke(); textSize(this.size * 0.2); // Texto menor
+                      textAlign(CENTER, CENTER); text(`BOSS ${this.level}`, this.x, this.y); // Mostra Nível
+                  }
+                  pop();
+              }
+
+              // NOVO: Desenha Aviso e Projéteis (chamado separadamente no draw())
+              drawProjectilesAndWarning() {
+                  if (this.health <= 0) return;
+                  push();
+
+                  // Desenha Aviso
+                  if (this.warningTimer > 0 && this.warningPosition) {
+                      this.drawWarning();
+                  }
+
+                  // Desenha Projéteis
+                  for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                       this.projectiles[i].show();
+                    }
+                   pop();
+              }
+
+              // NOVO: Função auxiliar para desenhar o aviso
+              drawWarning() {
+                   if (!this.warningPosition) return;
+
+                   // Animação do aviso (pulsar ou crescer)
+                   let timeRatio = (BOSS_ATTACK_WARNING_DURATION - this.warningTimer) / BOSS_ATTACK_WARNING_DURATION; // 0 -> 1
+                   let pulseFactor = 0.8 + 0.2 * abs(sin(timeRatio * PI * 3)); // Pulsar entre 0.8 e 1.0
+                   let currentSize = this.warningSize * pulseFactor; // Tamanho pulsante
+                   // let currentSize = this.warningSize * (1 + timeRatio * 0.3); // Ou Cresce um pouco
+                   let alpha = 180 + 75 * sin(timeRatio * PI * 4); // Pisca alpha mais rápido (180-255)
+
+                   noFill();
+                   strokeWeight(max(2, this.warningSize * 0.05));
+                   stroke(255, 0, 0, alpha); // Vermelho piscando
+                   ellipse(this.warningPosition.x, this.warningPosition.y, currentSize, currentSize);
+
+                   // Centro opcional para melhor visibilidade
+                   // fill(255, 0, 0, alpha * 0.5);
+                   // noStroke();
+                   // ellipse(this.warningPosition.x, this.warningPosition.y, 10, 10);
+              }
+
+              takeDamage(amount) {
+                  this.health -= amount;
+                  this.health = max(0, this.health); // Garante que não fique negativo
+                  console.log(`Boss tomou ${amount} de dano. Vida restante: ${this.health}/${this.maxHealth}`);
+                  updateBossHealthBar(); // Atualiza a barra de vida imediatamente
+                  // Add damage effect? (flash red?)
+              }
          }
 
-         // *** Boss Projectile - AGORA COM FORMAS VARIADAS ***
+         // *** Boss Projectile - AGORA COM VISUAL DE FOGO ***
          class BossProjectile {
-             constructor(x, y, vx, vy) {
-                 this.x = x; this.y = y;
-                 this.vx = vx; this.vy = vy;
-                 this.size = random(12, 22); // Tamanho do objeto
-                 this.color = color(random(200, 255), random(50, 150), 0, 230); // Mantém cor laranja/vermelha, mais opaco
-                 this.hitboxPadding = 1; // *** COLISÃO PRECISA ***
-                 this.angle = random(TWO_PI);
-                 this.rotationSpeed = random(-0.05, 0.05);
+              constructor(x, y, vx, vy) {
+                  this.x = x; this.y = y;
+                  this.vx = vx; this.vy = vy;
+                  this.baseSize = random(18, 28); // Tamanho base da bola de fogo
+                  this.size = this.baseSize;
+                  // Cor removida, será feita com gradiente
+                  this.hitboxPadding = 2; // *** COLISÃO PRECISA *** AJUSTADO
+                  this.angle = random(TWO_PI);
+                  this.rotationSpeed = random(-0.03, 0.03); // Rotação mais lenta
+                  this.life = 180; // Tempo de vida em frames (3s a 60fps) para fade out
+              }
+              update() {
+                  this.x += this.vx;
+                  this.y += this.vy;
+                  this.angle += this.rotationSpeed;
+                  this.life--;
+                  // Fade out size
+                  this.size = this.baseSize * (max(0, this.life) / 180); // Usa max(0, life)
+                  // this.size = max(0, this.size); // Garantido acima
 
-                 // *** NOVA FORMA ***
-                 let shapeRoll = random();
-                 if (shapeRoll < 0.4) this.shapeType = 'square';
-                 else if (shapeRoll < 0.7) this.shapeType = 'triangle';
-                 else this.shapeType = 'circle';
-             }
-             update() {
-                 this.x += this.vx;
-                 this.y += this.vy;
-                 this.angle += this.rotationSpeed;
-                 // Opcional: Adicionar leve gravidade aos projéteis?
-                 // this.vy += 0.02;
-             }
-             show() {
-                 push();
-                 translate(this.x, this.y);
-                 rotate(this.angle);
-                 stroke(0);
-                 strokeWeight(1.5);
-                 fill(this.color);
+                  // Opcional: Adicionar leve gravidade ou outro comportamento
+                   this.vy += 0.03; // Leve gravidade
+              }
+              show() {
+                   if (this.life <= 0 || this.size <= 0) return; // Não desenha se morto ou tamanho 0
+                   push();
+                   translate(this.x, this.y);
+                   rotate(this.angle);
+                   noStroke();
 
-                 // Desenha a forma
-                 switch(this.shapeType) {
-                     case 'square':
-                         rectMode(CENTER);
-                         rect(0, 0, this.size, this.size, 2);
-                         break;
-                     case 'triangle':
-                         // Triângulo equilátero apontando ~para a direita (direção geral do movimento)
-                         let h = this.size * (sqrt(3)/2); // Altura de um triângulo equilátero
-                         triangle(-this.size/2, h/3, -this.size/2, -h/3, this.size/2, 0);
-                         // Ou um triângulo mais simples:
-                         // triangle(-this.size/2, -this.size/2, this.size/2, -this.size/2, 0, this.size/2);
-                         break;
-                     case 'circle':
-                         ellipseMode(CENTER);
-                         ellipse(0, 0, this.size, this.size);
-                         break;
-                 }
+                   let alpha = map(this.life, 0, 60, 0, 255); // Fade out rápido no final
+                   alpha = constrain(alpha, 0, 255);
 
-                 pop();
-             }
-             offscreen() {
-                 const margin = this.size * 2;
-                 return this.x < -margin || this.x > width + margin || this.y < -margin || this.y > height + margin;
-             }
-             hits(player) {
-                 if (!player || player.isInvincible()) return false;
+                   // Desenha a bola de fogo com camadas e gradiente simulado
+                   // Camada externa (vermelho escuro/laranja)
+                   fill(255, 100, 0, alpha * 0.7);
+                   ellipse(0, 0, this.size, this.size);
 
-                 let pL = player.x - player.w / 2 + player.hitboxPadding;
-                 let pR = player.x + player.w / 2 - player.hitboxPadding;
-                 let pT = player.y - player.h / 2 + player.hitboxPadding;
-                 let pB = player.y + player.h / 2 - player.hitboxPadding;
+                   // Camada média (laranja/amarelo)
+                   fill(255, 165, 0, alpha * 0.9);
+                   ellipse(0, 0, this.size * 0.75, this.size * 0.75);
 
-                 let oL, oR, oT, oB;
-                 // AABB para todos por simplicidade (mesmo círculo/triângulo)
-                 // Ajustar hitbox para ser um pouco menor que o visual
-                 let hitSize = this.size * 0.8; // Hitbox 80% do tamanho visual
-                 oL = this.x - hitSize / 2 + this.hitboxPadding;
-                 oR = this.x + hitSize / 2 - this.hitboxPadding;
-                 oT = this.y - hitSize / 2 + this.hitboxPadding;
-                 oB = this.y + hitSize / 2 - this.hitboxPadding;
+                   // Camada interna (amarelo/branco)
+                   fill(255, 255, 150, alpha);
+                   ellipse(0, 0, this.size * 0.4, this.size * 0.4);
 
-                 if (pR > oL && pL < oR && pB > oT && pT < oB) {
-                     return true;
-                 }
-                 return false;
-             }
+                   pop();
+              }
+              offscreen() {
+                  // Considera o tempo de vida também
+                   if (this.life <= 0) return true;
+                   const margin = this.baseSize * 2; // Usa baseSize para margem maior
+                   return this.x < -margin || this.x > width + margin || this.y < -margin || this.y > height + margin;
+              }
+              hits(player) {
+                  if (!player || player.isInvincible() || this.life <= 0 || this.size <=0) return false;
+
+                  let pL = player.x - player.w / 2 + player.hitboxPadding;
+                  let pR = player.x + player.w / 2 - player.hitboxPadding;
+                  let pT = player.y - player.h / 2 + player.hitboxPadding;
+                  let pB = player.y + player.h / 2 - player.hitboxPadding;
+
+                  // Hitbox AABB baseada no tamanho ATUAL da bola de fogo
+                   let hitSize = this.size * 0.7; // Hitbox 70% do tamanho visual atual
+                   hitSize = max(5, hitSize); // Garante hitbox mínima
+
+                   let oL = this.x - hitSize / 2 + this.hitboxPadding;
+                   let oR = this.x + hitSize / 2 - this.hitboxPadding;
+                   let oT = this.y - hitSize / 2 + this.hitboxPadding;
+                   let oB = this.y + hitSize / 2 - this.hitboxPadding;
+
+                   if (pR > oL && pL < oR && pB > oT && pT < oB) {
+                       return true;
+                   }
+                   return false;
+              }
          }
 
 
          // Player Particle Class (Mantida)
           class PlayerParticle {
-               constructor(x, y, vx, vy, life = 40, forceColor = null) {
-                   this.x = x;
-                   this.y = y;
-                   this.vx = vx + random(-0.3, 0.3);
-                   this.vy = vy + random(-0.3, 0.3);
-                   this.initialLife = life + random(-10, 10);
-                   this.life = max(5, this.initialLife);
-                   this.size = random(3, 6);
-                   this.color = forceColor || playerParticleColor || [255, 255, 255];
-               }
-               update() {
-                   this.x += this.vx;
-                   this.y += this.vy;
-                   this.vy += 0.05; // Gravity
-                   this.vx *= 0.98; // Drag
-                   this.life--;
-               }
-               show() {
-                   push();
-                   let alpha = map(this.life, 0, this.initialLife, 0, 200);
-                   fill(this.color[0], this.color[1], this.color[2], alpha);
-                   noStroke();
-                   ellipse(this.x, this.y, this.size * (this.life / this.initialLife)); // Shrink
-                   pop();
-               }
-               isFinished() {
-                   return this.life <= 0;
-               }
+                constructor(x, y, vx, vy, life = 40, forceColor = null) {
+                    this.x = x;
+                    this.y = y;
+                    this.vx = vx + random(-0.3, 0.3);
+                    this.vy = vy + random(-0.3, 0.3);
+                    this.initialLife = life + random(-10, 10);
+                    this.life = max(5, this.initialLife);
+                    this.size = random(3, 6);
+                    this.color = forceColor || playerParticleColor || [255, 255, 255];
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vy += 0.05; // Gravity
+                    this.vx *= 0.98; // Drag
+                    this.life--;
+                }
+                show() {
+                    push();
+                    let alpha = map(this.life, 0, this.initialLife, 0, 200);
+                    fill(this.color[0], this.color[1], this.color[2], alpha);
+                    noStroke();
+                    ellipse(this.x, this.y, this.size * (this.life / this.initialLife)); // Shrink
+                    pop();
+                }
+                isFinished() {
+                    return this.life <= 0;
+                }
           }
 
 
          // --- Funções de Janela ---
          function windowResized() {
-             console.log("windowResized: Redimensionando...");
-             resizeCanvas(windowWidth, windowHeight);
-             console.log(`windowResized: Canvas redimensionado para ${width}x${height}`);
+              console.log("windowResized: Redimensionando...");
+              resizeCanvas(windowWidth, windowHeight);
+              console.log(`windowResized: Canvas redimensionado para ${width}x${height}`);
 
-             // Recalcula margem chão
-              groundMargin = constrain(windowHeight * 0.15, 80, 150);
-             console.log(`windowResized: Nova margem chão: ${groundMargin}`);
+              // Recalcula margem chão
+               groundMargin = constrain(windowHeight * 0.15, 80, 150);
+              console.log(`windowResized: Nova margem chão: ${groundMargin}`);
 
-             createStars();
+              createStars();
 
-              if (player) {
-                  player.reset(); // Recalcula propriedades baseadas no tamanho
-                  player.y = player.groundLevel - player.h / 2; // Garante posição Y
-              }
+               if (player) {
+                   player.reset(); // Recalcula propriedades baseadas no tamanho
+                   player.y = player.groundLevel - player.h / 2; // Garante posição Y
+               }
 
-              // Atualiza obstáculos existentes
-             obstacles.forEach(obs => {
-                  obs.groundLevel = height - groundMargin;
-                  if (obs.type === 'spike' || obs.type === 'triangle_up') { obs.y = obs.groundLevel; }
-                  else if ((obs.type === 'block' || obs.type === 'rectangle_tall') && obs.verticalSpeed === 0) { obs.y = obs.groundLevel - obs.blockHeight; }
-                  // Recalcula velocidade baseada na largura
-                  obs.baseSpeed = width * 0.007;
-                  obs.speedIncreasePerLevel = width * 0.0005;
-                  obs.speed = obs.baseSpeed + (obs.level * obs.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
-                  obs.speed = max(obs.speed, width * 0.005);
-             });
+               // Atualiza obstáculos existentes
+              obstacles.forEach(obs => {
+                   obs.groundLevel = height - groundMargin;
+                   if (obs.type === 'spike' || obs.type === 'triangle_up') { obs.y = obs.groundLevel; }
+                   else if ((obs.type === 'block' || obs.type === 'rectangle_tall') && obs.verticalSpeed === 0) { obs.y = obs.groundLevel - obs.blockHeight; }
+                   // Recalcula velocidade baseada na largura
+                   obs.baseSpeed = width * 0.007;
+                   obs.speedIncreasePerLevel = width * 0.0005;
+                   obs.speed = obs.baseSpeed + (obs.level * obs.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
+                   obs.speed = max(obs.speed, width * 0.005);
+              });
 
 
-              if (boss) {
-                   boss.size = constrain(width * 0.15, 80, 150);
-                   if (boss.state === 'attacking') boss.x = width - boss.size * 1.2;
-                   boss.verticalRange = { top: height * 0.1, bottom: height - groundMargin - boss.size * 0.8 };
-                   boss.y = constrain(boss.y, boss.verticalRange.top + boss.size/2, boss.verticalRange.bottom - boss.size/2);
-                   boss.speedY = height * 0.003 + (boss.level * height * 0.0002); // Recalcula velocidade Y
-                   boss.particleSpeed = width * (0.006 + (boss.level * 0.0004)); // Recalcula velocidade projétil
-              }
+               if (boss) {
+                    boss.size = constrain(width * 0.15, 80, 150);
+                    if (boss.state === 'attacking') boss.x = width - boss.size * 1.2;
+                    boss.verticalRange = { top: height * 0.1, bottom: height - groundMargin - boss.size * 0.8 };
+                    boss.y = constrain(boss.y, boss.verticalRange.top + boss.size/2, boss.verticalRange.bottom - boss.size/2);
+                    boss.speedY = height * 0.003 + (boss.level * height * 0.0002); // Recalcula velocidade Y
+                    boss.particleSpeed = width * (0.006 + (boss.level * 0.0004)); // Recalcula velocidade projétil
+                    // Recalcula tamanho do aviso
+                    boss.warningSize = player ? player.baseSize * 1.8 : 60;
+               }
 
-              // Reaplica estado para garantir UI correta
-              if (gameState !== 'loading') {
-                  changeState(gameState);
-              }
+               // Reaplica estado para garantir UI correta
+               if (gameState !== 'loading') {
+                  // Força um redesenho completo chamando changeState novamente
+                  // Evita problemas de layout dos botões p5
+                  let currentState = gameState;
+                  gameState = "resizing"; // Estado temporário
+                  changeState(currentState);
+               }
 
-              // Fecha menus
-              if (skinContainer && skinContainer.style.display === 'flex') {
-                   toggleSkinSelect();
-              }
-              if (particleColorSelector && particleColorSelector.style.display === 'flex') {
-                   particleColorSelector.style.display = 'none';
-                   if(gameState === 'menu') particleColorSelector.style.display = 'flex';
-              }
+               // Fecha menus se estiverem abertos (evita problemas de posicionamento)
+               if (skinContainer && skinContainer.style.display !== 'none') {
+                    skinContainer.style.display = 'none';
+               }
+               if (particleColorSelector && particleColorSelector.style.display !== 'none') {
+                    particleColorSelector.style.display = 'none';
+                    if(gameState === 'menu') particleColorSelector.style.display = 'flex'; // Reabre se estava no menu
+               }
+               if (instructionsPanel && instructionsPanel.style.display !== 'none') {
+                   instructionsPanel.style.display = 'none';
+               }
 
-             console.log("windowResized: Processamento completo.");
+
+              console.log("windowResized: Processamento completo.");
          }
 
     </script>
