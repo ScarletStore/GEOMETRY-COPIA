@@ -16,7 +16,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden; /* Impede barras de rolagem */
-            height: 100%;     /* Garante que o body ocupe toda a altura */
+            height: 100%;      /* Garante que o body ocupe toda a altura */
             background-color: #000; /* Fundo preto padrão */
             color: #fff;
             font-family: 'Press Start 2P', cursive;
@@ -441,23 +441,8 @@
             100% { background-color: rgba(255, 255, 255, 0); }
         }
 
-         /* NOVO: Estilo para Mensagem na Tela */
-        #gameMessageDisplay { /* Adicionado ID para container se necessário, mas desenharemos no canvas */
-           /* Estilos se fosse HTML: */
-           /* position: absolute;
-           top: 15px;
-           left: 50%;
-           transform: translateX(-50%);
-           padding: 5px 15px;
-           background-color: rgba(0, 0, 0, 0.6);
-           color: yellow;
-           border-radius: 5px;
-           font-size: clamp(10px, 1.8vw, 14px);
-           z-index: 50;
-           text-align: center;
-           display: none; /* Controlado por JS */
-           /* transition: opacity 0.5s ease-out; */
-        }
+         /* NOVO: Estilo para Mensagem na Tela (Desenhado no Canvas) */
+         /* #gameMessageDisplay { } - Estilos não necessários pois será desenhado no p5 */
 
     </style>
 </head>
@@ -498,16 +483,18 @@
                 <ul>
                     <li><strong>PC:</strong> Use [ESPAÇO] ou [SETA P/ CIMA] para pular (aperte novamente no ar para pulo duplo).</li>
                     <li><strong>Mobile:</strong> Toque na tela para pular (toque novamente no ar para pulo duplo).</li>
-                    <li>Desvie dos obstáculos vermelhos (espinhos), blocos e círculos.</li>
+                    <li>Desvie dos obstáculos vermelhos (espinhos), blocos e círculos verdes.</li>
                     <li>Colidir <strong>após reviver</strong> é Game Over! Você tem <strong>1 chance</strong> de reviver.</li>
                     <li>Sobreviva por <strong>3 minutos</strong> para vencer.</li>
                     <li>O <strong>Boss</strong> aparece após <strong>50 segundos</strong> (veja o contador!).</li>
-                    <li>Contra o Boss, você tem <strong>5 vidas</strong>. Cada projétil do Boss tira uma vida (ou usa sua chance de reviver).</li>
+                    <li>Contra o Boss, você tem <strong>1 vida</strong> (a chance de reviver). Ser atingido por um projétil usa a chance de reviver ou causa Game Over.</li>
                     <li><strong>Habilidades:</strong>
                         <ul>
                             <li><strong>Nível 3:</strong> Libera "Esquiva Rápida" (teleporte curto).</li>
                             <li><strong>Nível 6:</strong> Libera "Tiro Certeiro" (destrói o Boss).</li>
-                            <li>Use o botão de habilidade (canto inferior esquerdo) quando o Boss estiver ativo e a habilidade carregada.</li>
+                             <li>Use o botão de habilidade (canto inferior esquerdo).</li>
+                             <li>A habilidade só pode ser usada quando o Boss estiver ativo e a habilidade carregada.</li>
+                             <li>Para "Tiro Certeiro": <strong>Clique 3 vezes</strong> no botão para matar o boss instantaneamente!</li>
                         </ul>
                     </li>
                     <li><strong>Pausa:</strong> Use 'P' no PC ou o botão 'Pausar'/'Continuar'.</li>
@@ -607,11 +594,11 @@
         let playerNickname = "Convidado";
 
         // Vidas e Reviver
-        let playerLives = 5;
-        const MAX_PLAYER_LIVES = 5;
-        let hasRevived = false; // NOVO: Controle de revive
-        let reviveShakeTimer = 0; // NOVO: Timer para efeito de shake
-        let reviveLightTimer = 0; // NOVO: Timer para efeito de luz
+        let playerLives = 1; // AGORA SÓ TEM A CHANCE DE REVIVER
+        const MAX_PLAYER_LIVES = 1; // Era 5
+        let hasRevived = false; // Controle de revive
+        let reviveShakeTimer = 0;
+        let reviveLightTimer = 0;
 
         // Habilidade
         let abilityAvailable = false; // Se o nível da habilidade foi atingido
@@ -620,6 +607,7 @@
         let abilityCooldownTimer = 0;
         const ABILITY_COOLDOWN = 300; // Cooldown em frames (5 segundos a 60fps)
         const DODGE_DISTANCE = 150; // Distância do teleporte/esquiva
+        let killAbilityClicks = 0; // *** NOVO: Contador para matar o boss ***
 
         // Partículas do Jogador
         let playerParticleColor = [255, 255, 255]; // Cor padrão branca
@@ -698,8 +686,8 @@
             // Adiciona listener de toque no canvas (APENAS CANVAS)
             gameCanvas.touchStarted(handleCanvasTouch);
 
-             // Carrega dados salvos
-             loadGameData(); // Carrega nick, level, skin, cor
+              // Carrega dados salvos
+              loadGameData(); // Carrega nick, level, skin, cor
 
             // Espera fontes e finaliza setup
             document.fonts.ready.then(() => {
@@ -720,16 +708,16 @@
             console.log("Setup: Finalizando configuração...");
             assetsReady = true;
 
-             // Aplica Nickname e Level Máximo carregados na área de perfil
-             updateProfileArea(); // Atualiza a área de perfil com dados carregados
+              // Aplica Nickname e Level Máximo carregados na área de perfil
+              updateProfileArea(); // Atualiza a área de perfil com dados carregados
 
-             if (nicknameInput) nicknameInput.value = playerNickname !== "Convidado" ? playerNickname : "";
+              if (nicknameInput) nicknameInput.value = playerNickname !== "Convidado" ? playerNickname : "";
 
-             // Adiciona Copyright ao rodapé
-             if (footerCopyright) {
-                 const currentYear = new Date().getFullYear();
-                 footerCopyright.textContent = `© ${currentYear} dino.editxx`;
-             }
+              // Adiciona Copyright ao rodapé
+              if (footerCopyright) {
+                  const currentYear = new Date().getFullYear();
+                  footerCopyright.textContent = `© ${currentYear} dino.editxx`;
+              }
 
             // Cria jogador
             if (!player) {
@@ -768,10 +756,10 @@
             updateSelectedSkinVisual(); // Marca a skin inicial salva
             setupParticleColorSelector(); // Configura seletor de cor
 
-             // Inicializa Lucide Ícones (garante que rodem após elementos serem criados)
-             if (typeof lucide !== 'undefined') {
-                 try { lucide.createIcons(); } catch(e) { console.warn("Erro ao criar ícones Lucide no finishSetup:", e); }
-             }
+              // Inicializa Lucide Ícones (garante que rodem após elementos serem criados)
+              if (typeof lucide !== 'undefined') {
+                  try { lucide.createIcons(); } catch(e) { console.warn("Erro ao criar ícones Lucide no finishSetup:", e); }
+              }
 
             if (loadingMessage) loadingMessage.style.display = 'none';
 
@@ -796,6 +784,11 @@
                     translate(random(-5, 5), random(-4, 4));
                     reviveShakeTimer--;
                 }
+                 // --- Efeito de Luz Branca (Reviver) ---
+                if (reviveLightTimer > 0) { // Atualiza timer aqui
+                    reviveLightTimer--;
+                }
+
 
                 // --- Atualização do Zoom ---
                 zoomLevel = lerp(zoomLevel, targetZoom, zoomChangeSpeed);
@@ -843,37 +836,37 @@
                 }
 
                  // Desenha Nickname acima do jogador - Dentro do push/pop do zoom
-                if (player && (gameState === 'play' || gameState === 'paused')) {
-                    push();
-                    fill(200, 255, 200, 200); // Cor semi-transparente
-                    textSize(constrain(player.w * 0.25, 8, 12)); // Tamanho relativo à largura do jogador
-                    textAlign(CENTER, BOTTOM);
-                    noStroke();
-                    text(playerNickname, player.x, player.y - player.h / 2 - 8); // Posiciona acima
-                    pop();
-                }
+                 if (player && (gameState === 'play' || gameState === 'paused')) {
+                     push();
+                     fill(200, 255, 200, 200); // Cor semi-transparente
+                     textSize(constrain(player.w * 0.25, 8, 12)); // Tamanho relativo à largura do jogador
+                     textAlign(CENTER, BOTTOM);
+                     noStroke();
+                     text(playerNickname, player.x, player.y - player.h / 2 - 8); // Posiciona acima
+                     pop();
+                 }
 
-                // NOVO: Desenha Mensagem na Tela (Dentro do push/pop do zoom)
-                if (displayMessageTimer > 0) {
-                    push();
-                    // Calcula alpha com fade-out rápido no final
-                    let alphaValue = 255;
-                    if (displayMessageTimer < 60) { // Fade out nos últimos 60 frames (1 segundo)
-                        alphaValue = map(displayMessageTimer, 0, 60, 0, 255);
-                    }
-                    fill(255, 255, 0, alphaValue); // Amarelo com fade
-                    textSize(min(width * 0.03, height * 0.04, 20)); // Tamanho da fonte
-                    textAlign(CENTER, TOP);
-                    noStroke();
-                    textStyle(BOLD); // Negrito para destacar
-                    text(displayMessage, width / 2, 20); // Posição no topo, centralizado
-                    textStyle(NORMAL); // Reset text style
-                    pop();
+                 // NOVO: Desenha Mensagem na Tela (Dentro do push/pop do zoom)
+                 if (displayMessageTimer > 0) {
+                     push();
+                     // Calcula alpha com fade-out rápido no final
+                     let alphaValue = 255;
+                     if (displayMessageTimer < 60) { // Fade out nos últimos 60 frames (1 segundo)
+                         alphaValue = map(displayMessageTimer, 0, 60, 0, 255);
+                     }
+                     fill(255, 255, 0, alphaValue); // Amarelo com fade
+                     textSize(min(width * 0.03, height * 0.04, 20)); // Tamanho da fonte
+                     textAlign(CENTER, TOP);
+                     noStroke();
+                     textStyle(BOLD); // Negrito para destacar
+                     text(displayMessage, width / 2, 20); // Posição no topo, centralizado
+                     textStyle(NORMAL); // Reset text style
+                     pop();
 
-                    if (!['paused'].includes(gameState)) { // Não diminui timer se pausado
-                       displayMessageTimer--;
-                    }
-                }
+                     if (!['paused'].includes(gameState)) { // Não diminui timer se pausado
+                        displayMessageTimer--;
+                     }
+                 }
 
                 pop(); // Restaura transformações de câmera/zoom
                 pop(); // Restaura transformações do shake
@@ -892,7 +885,7 @@
                         showMessage("Habilidade Carregada!", 120); // NOVO: Mensagem
                     }
                     // Opcional: Atualizar texto do botão com cooldown restante
-                    // else { updateAbilityButton(); }
+                     else { updateAbilityButton(); } // Atualiza para mostrar contador de cooldown
                 }
 
 
@@ -948,8 +941,8 @@
              try {
                  score = 0;
                  currentLevel = 1; // Nível começa em 1
-                 playerLives = MAX_PLAYER_LIVES; // Reseta vidas
-                 hasRevived = false; // NOVO: Reseta o estado de reviver
+                 playerLives = MAX_PLAYER_LIVES; // Reseta vidas para 1 (só a chance de reviver)
+                 hasRevived = false; // Reseta o estado de reviver
                  reviveShakeTimer = 0; // Reseta timers de efeito
                  reviveLightTimer = 0;
                  obstacles = [];
@@ -977,6 +970,7 @@
                  currentAbilityType = null;
                  abilityReady = false;
                  abilityCooldownTimer = 0;
+                 killAbilityClicks = 0; // *** NOVO: Reseta contador de cliques ***
                  updateAbilityButton(); // Atualiza estado visual inicial
 
                  targetZoom = 1.25; // NOVO: Define zoom para o jogo
@@ -990,7 +984,7 @@
 
                  console.log("startGame: Preparação concluída, mudando para 'play'");
                  changeState("play");
-                 showMessage("Desvie dos Obstáculos!", 180); // NOVO: Mensagem inicial
+                 showMessage("Desvie dos Obstáculos!", 180); // Mensagem inicial
 
              } catch(e) {
                  console.error("ERRO dentro de startGame:", e);
@@ -1058,9 +1052,11 @@
                 // Aparecimento
                 if (!boss && remainingBossTime <= 0) {
                     console.log("runGameScreen: Boss vai aparecer!");
-                    showMessage("CHEFE APARECEU!", 240); // NOVO: Mensagem
+                    // *** NOVA MENSAGEM ***
+                    showMessage("Clique 3x Habilidade Nv.6 para matar o Boss!", 240);
                     obstacles = []; // Limpa obstáculos normais
                     boss = new Boss(bossImg);
+                    killAbilityClicks = 0; // *** NOVO: Reseta contador de cliques ao spawnar ***
                     if (bossCountdownDisplay) bossCountdownDisplay.style.display = 'none';
                      updateAbilityButton(); // Habilita o botão de habilidade se o nível permitir
                 }
@@ -1078,30 +1074,30 @@
                     boss.update(player);
                     boss.show();
 
-                    // Checa colisão das partículas do boss com o player
+                    // Checa colisão das partículas (objetos) do boss com o player
                      for (let i = boss.particles.length - 1; i >= 0; i--) {
                          let p = boss.particles[i];
                          if (p.hits(player)) {
-                             console.log("runGameScreen: Colisão com partícula do Boss!");
-                             boss.particles.splice(i, 1); // Remove partícula
+                             console.log("runGameScreen: Colisão com partícula/objeto do Boss!");
+                             boss.particles.splice(i, 1); // Remove partícula/objeto
                              handlePlayerHit(); // Chama função que lida com hit e revive
                              if (gameState === 'gameover') return; // Se o hit resultou em game over, sai
-                             continue; // Pula para próxima partícula
+                             continue; // Pula para próxima partícula/objeto
                          } else if (p.offscreen()) {
                              boss.particles.splice(i, 1);
                          }
                      }
 
-                    // Verifica se o boss foi derrotado (pela habilidade)
-                   if (boss.health <= 0) {
-                       console.log("Boss Derrotado!");
-                       showMessage("CHEFE DERROTADO!", 180); // NOVO: Mensagem
-                       score += 50; // Bonus por matar o boss
-                       updateScoreDisplay();
-                       boss = null; // Remove o boss
-                       // Poderia adicionar uma animação de explosão aqui
-                       updateAbilityButton(); // Desativa botão de habilidade
-                   }
+                     // Verifica se o boss foi derrotado (pela habilidade, após 3 cliques)
+                    if (boss.health <= 0) {
+                        console.log("Boss Derrotado!");
+                        // showMessage("CHEFE DERROTADO!", 180); // Mensagem movida para useAbility
+                        score += 50; // Bonus por matar o boss
+                        updateScoreDisplay();
+                        boss = null; // Remove o boss
+                        // Poderia adicionar uma animação de explosão aqui
+                        updateAbilityButton(); // Desativa botão de habilidade (pois boss sumiu)
+                    }
                 }
 
             } catch (e) {
@@ -1110,28 +1106,28 @@
             }
         }
 
-        // NOVO: Função para lidar com o jogador sendo atingido
+        // Função para lidar com o jogador sendo atingido
         function handlePlayerHit() {
             if (player.isInvincible()) return; // Não faz nada se já está invencível (piscando)
 
              if (!hasRevived) {
                  hasRevived = true;
-                 //playerLives--; // Perde uma vida mesmo no revive (opcional, pode remover se quiser)
-                 //updateLivesDisplay(); // Atualiza display se perder vida no revive
+                 // playerLives = 0; // A vida já começa em 1 (ou 0 após reviver)
+                 updateLivesDisplay(); // Atualiza display (vai mostrar 0)
                  player.flash(90); // Flash mais longo para indicar revive/invencibilidade
                  startReviveEffects();
-                 console.log("REVIVE USADO! Vidas restantes:", playerLives);
-                 showMessage("REVIVIDO! Ultima Chance!", 150); // NOVO: Mensagem
+                 console.log("REVIVE USADO! Ultima chance gasta.");
+                 showMessage("REVIVIDO! Ultima Chance!", 150);
                  // Opcional: Tocar som de reviver
              } else {
-                playerLives = 0; // Zera vidas no hit final
-                updateLivesDisplay();
-                console.log("Sem revives restantes. GAME OVER.");
-                changeState("gameover");
+                 playerLives = 0; // Garante que vidas fiquem 0
+                 updateLivesDisplay();
+                 console.log("Sem revives restantes. GAME OVER.");
+                 changeState("gameover");
              }
         }
 
-        // NOVO: Função para iniciar efeitos visuais do revive
+        // Função para iniciar efeitos visuais do revive
         function startReviveEffects() {
              reviveShakeTimer = 25; // Duração do shake em frames
              reviveLightTimer = 35; // Duração da luz branca em frames
@@ -1142,7 +1138,7 @@
             setTimeout(() => flashOverlay.remove(), 600); // Remove após a animação
         }
 
-        // NOVO: Função para mostrar mensagens na tela
+        // Função para mostrar mensagens na tela
         function showMessage(text, duration = 180) { // duration em frames (3 segundos a 60fps)
             displayMessage = text;
             displayMessageTimer = duration;
@@ -1160,12 +1156,6 @@
              fill(255); noStroke();
              text("Use [ESPAÇO] ou [TOQUE] para pular!", width / 2, height * 0.55);
 
-             // Mostra nível máximo alcançado (redundante com perfil, mas pode manter)
-            /*
-            textSize(min(width * 0.025, height * 0.03, 14));
-            fill(200);
-            text(`Nível Máximo: ${highestLevelReached}`, width/2, height * 0.65);
-            */
         }
 
         function showPausedScreen() {
@@ -1254,14 +1244,15 @@
                      currentAbilityType = 'dodge';
                      abilityReady = true; // Pronta para usar a primeira vez
                      console.log("Habilidade 'Esquiva Rápida' Desbloqueada!");
-                     showMessage("Esquiva Rápida (Nível 3) Desbloqueada!", 200); // NOVO: Mensagem
+                     showMessage("Esquiva Rápida (Nível 3) Desbloqueada!", 200);
                      updateAbilityButton();
                  } else if (currentLevel === 6) {
                      abilityAvailable = true; // Garante que está disponível
                      currentAbilityType = 'kill'; // Muda para a habilidade de matar
                      abilityReady = true; // Pronta para usar
                      console.log("Habilidade 'Tiro Certeiro' Desbloqueada!");
-                     showMessage("Tiro Certeiro (Nível 6) Desbloqueado!", 200); // NOVO: Mensagem
+                     showMessage("Tiro Certeiro (Nível 6) Desbloqueado!", 200);
+                     killAbilityClicks = 0; // Reseta contagem de kill se acabou de liberar
                      updateAbilityButton();
                  }
 
@@ -1313,18 +1304,6 @@
                 }
             }, 1500);
         }
-
-        // Ativa o efeito de zoom temporário (NÃO MAIS USADO para level up, zoom é constante)
-        /*
-        function triggerZoomEffect() {
-            console.log("Triggering Zoom Effect");
-            targetZoom = 1.15; // Define o alvo do zoom
-            setTimeout(() => {
-                 targetZoom = 1.0; // Agenda retorno ao zoom normal
-            }, 800); // Duração do zoom
-        }
-        */
-
 
         // Partículas do jogador
         function updateAndDrawPlayerParticles() {
@@ -1443,7 +1422,7 @@
              }
         }
 
-         function createWinButtons() {
+          function createWinButtons() {
              removeAllP5Buttons();
              if (!winMenuButtonP5) {
                  winMenuButtonP5 = createButton("Voltar ao Menu")
@@ -1459,7 +1438,7 @@
                      .mousePressed(startGame);
                  // console.log("Botão Jogar Novamente (Win p5) criado.");
              }
-        }
+         }
 
         function changeState(newState) {
              if (gameState === newState) return;
@@ -1527,8 +1506,8 @@
                      if (scoreDisplay) scoreDisplay.style.display = 'block';
                      if (levelDisplay) levelDisplay.style.display = 'block';
                      if (livesDisplay) { // Mostra Vidas zeradas no gameover
-                          livesDisplay.innerText = "Vidas: 0";
-                          livesDisplay.style.display = 'block';
+                           livesDisplay.innerText = "Vidas: 0";
+                           livesDisplay.style.display = 'block';
                      }
                      if (timerDisplay) timerDisplay.style.display = 'block'; // Mostra timer final
                      targetZoom = 1.0; // Zoom normal no fim de jogo
@@ -1595,1021 +1574,1063 @@
              return true;
          }
 
-         // --- Funções de Skin ---
-         function toggleSkinSelect() {
-             if (!skinContainer || !skinButton || !gameContainer) return;
-             if (skinContainer.style.display === "none" || skinContainer.style.display === "") {
-                 populateSkinContainer(); // Popula/Atualiza ao abrir
-                 skinContainer.style.display = "flex";
-                 // Ajusta posição
-                 const skinButtonRect = skinButton.getBoundingClientRect();
-                 const containerRect = gameContainer.elt.getBoundingClientRect();
-                 let topPos = (skinButtonRect.bottom - containerRect.top + 5);
-                 let rightPos = (containerRect.right - skinButtonRect.right);
+          // --- Funções de Skin ---
+          function toggleSkinSelect() {
+              if (!skinContainer || !skinButton || !gameContainer) return;
+              if (skinContainer.style.display === "none" || skinContainer.style.display === "") {
+                  populateSkinContainer(); // Popula/Atualiza ao abrir
+                  skinContainer.style.display = "flex";
+                  // Ajusta posição
+                  const skinButtonRect = skinButton.getBoundingClientRect();
+                  const containerRect = gameContainer.elt.getBoundingClientRect();
+                  let topPos = (skinButtonRect.bottom - containerRect.top + 5);
+                  let rightPos = (containerRect.right - skinButtonRect.right);
 
-                 // Garante que não saia da tela em baixo
-                 let availableHeight = window.innerHeight - topPos - 20; // Altura disponível abaixo do botão
-                 let maxHeight = Math.min(availableHeight, window.innerHeight * 0.7); // Limita a 70% da altura da tela
+                  // Garante que não saia da tela em baixo
+                  let availableHeight = window.innerHeight - topPos - 20; // Altura disponível abaixo do botão
+                  let maxHeight = Math.min(availableHeight, window.innerHeight * 0.7); // Limita a 70% da altura da tela
 
-                 skinContainer.style.top = topPos + 'px';
-                 skinContainer.style.right = rightPos + 'px';
-                 skinContainer.style.maxHeight = maxHeight + 'px'; // Usa max-height calculado
-             } else {
-                 skinContainer.style.display = "none";
-             }
-         }
-
-         function populateSkinContainer() {
-             if (!skinContainer) { console.error("populateSkinContainer: Container não encontrado!"); return; }
-             skinContainer.innerHTML = '';
-             console.log("populateSkinContainer: Populando skins. Nível Máximo:", highestLevelReached); // USA NÍVEL MÁXIMO
-
-             let skinsExist = false;
-             for (const key in playerSkins) {
-                 skinsExist = true;
-                 const skin = playerSkins[key];
-                 const isUnlocked = highestLevelReached >= skin.unlockLevel; // Verifica contra NÍVEL MÁXIMO
-
-                 const entryDiv = document.createElement('div');
-                 entryDiv.classList.add('skin-entry');
-                 entryDiv.dataset.skinKey = key;
-                 if (!isUnlocked) entryDiv.classList.add('locked');
-                 if (key === selectedSkinKey) entryDiv.classList.add('selected');
-
-                 const img = document.createElement('img');
-                 img.classList.add('skinOption');
-                 img.alt = skin.name;
-                 img.title = `${skin.name} (${skin.rarity}) - ${isUnlocked ? 'Desbloqueada' : `Nível ${skin.unlockLevel}`}`;
-
-                 // Lógica de Imagem com Fallback Melhorado
-                 if (skin.loadedImg && skin.loadedImg.width > 0 && skin.loadedImg.height > 0) { // Verifica se p5.Image é válida
-                     img.src = skin.loadedImg.src;
-                     // console.log(`Skin ${key}: Usando loadedImg.src`); // Log opcional
-                 } else {
-                      // Tenta usar URL original se existir, mesmo que tenha falhado no preload
-                      if (skin.img) {
-                          img.src = skin.img; // Usa a URL original
-                          console.log(`Skin ${key}: Tentando usar skin.img URL (${skin.img})`);
-                      } else {
-                          // Sem URL original, usa placeholder de cor/face via placehold.co
-                           const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
-                           const faceText = skin.face ? encodeURIComponent(skin.face) : '?';
-                           const placeholderUrl = `https://placehold.co/60x60/${bgColor}/000?text=${faceText}&font=pressstart2p`;
-                           img.src = placeholderUrl;
-                           console.log(`Skin ${key}: Usando placeholder URL (${placeholderUrl})`);
-                      }
-                 }
-
-                 // Fallback final usando onerror no elemento img
-                 img.onerror = function() {
-                     console.warn(`populateSkinContainer: Falha ao carregar ${this.src}. Usando placeholder final.`);
-                      // Define um placeholder genérico ou de cor via placehold.co
-                      const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
-                      const faceText = skin.face ? encodeURIComponent(skin.face) : 'ERR';
-                      const fallbackUrl = `https://placehold.co/60x60/${bgColor}/333?text=${faceText}&font=pressstart2p`;
-                      // Evita loop infinito se o próprio placeholder falhar (improvável)
-                      if (this.src !== fallbackUrl) {
-                          this.src = fallbackUrl;
-                      }
-                     this.onerror = null; // Remove o handler para evitar loops
-                 };
-
-
-                 const nameSpan = document.createElement('span'); nameSpan.classList.add('skin-name'); nameSpan.innerText = skin.name;
-                 const raritySpan = document.createElement('span'); raritySpan.classList.add('skin-rarity', `rarity-${skin.rarity}`); raritySpan.innerText = skin.rarity;
-
-                 entryDiv.appendChild(img);
-                 entryDiv.appendChild(nameSpan);
-                 entryDiv.appendChild(raritySpan);
-
-                 if (!isUnlocked) {
-                     const lockOverlay = document.createElement('div'); lockOverlay.classList.add('lock-overlay');
-                     const lockIcon = document.createElement('i'); lockIcon.setAttribute('data-lucide', 'lock');
-                     const unlockSpan = document.createElement('span'); unlockSpan.classList.add('skin-unlock'); unlockSpan.innerText = `Nível ${skin.unlockLevel}`;
-                     lockOverlay.appendChild(lockIcon); lockOverlay.appendChild(unlockSpan);
-                     entryDiv.appendChild(lockOverlay);
-                 } else {
-                     entryDiv.onclick = () => selectSkin(key);
-                 }
-                 skinContainer.appendChild(entryDiv);
-             }
-
-             if (!skinsExist) { skinContainer.innerHTML = '<span>Nenhuma skin encontrada.</span>'; }
-
-             if (typeof lucide !== 'undefined') {
-                 try { lucide.createIcons(); } catch(e) { console.warn("Erro ao criar ícones Lucide:", e); }
-             } else { console.warn("populateSkinContainer: Biblioteca Lucide não carregada."); }
-         }
-
-
-         function selectSkin(key) {
-             if (!playerSkins[key]) { console.warn("selectSkin: Skin inválida:", key); return; }
-             // Verifica NÍVEL MÁXIMO para desbloqueio
-             if (highestLevelReached < playerSkins[key].unlockLevel) {
-                 console.log("selectSkin: Skin bloqueada (Nível Máximo insuficiente):", key);
-                 return; // Não seleciona
-             }
-             selectedSkinKey = key;
-             console.log("selectSkin: Skin selecionada:", selectedSkinKey);
-             if (player) { player.setAppearance(playerSkins[selectedSkinKey]); }
-             updateSelectedSkinVisual();
-             updateProfilePic(); // NOVO: Atualiza foto do perfil
-             saveGameData(); // Salva a skin selecionada
-             if(skinContainer) skinContainer.style.display = "none";
-         }
-
-         function updateSelectedSkinVisual() {
-             if (!skinContainer || skinContainer.style.display === 'none') return; // Otimização: só atualiza se visível
-             document.querySelectorAll('.skin-entry').forEach(el => el.classList.remove('selected'));
-             const selectedEntry = skinContainer.querySelector(`.skin-entry[data-skin-key="${selectedSkinKey}"]`);
-             if (selectedEntry) { selectedEntry.classList.add('selected'); }
-         }
-
-         // --- Funções de UI Update ---
-         function updateScoreDisplay() { if (scoreDisplay) scoreDisplay.innerText = "Score: " + score; }
-         function updateLevelDisplay() { if (levelDisplay) levelDisplay.innerText = "Nível: " + currentLevel; }
-         function updateLivesDisplay() { if (livesDisplay) livesDisplay.innerText = "Vidas: " + max(0, playerLives); }
-         function updateTimerDisplay() {
-             if (timerDisplay) {
-                 let minutes = floor(gameTimer / 60);
-                 let seconds = gameTimer % 60;
-                 timerDisplay.innerText = `Tempo: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-             }
-         }
-         function updateBossCountdownDisplay(remainingSeconds) {
-             if (bossCountdownDisplay) {
-                 let displaySeconds = max(0, floor(remainingSeconds));
-                 bossCountdownDisplay.innerText = `Boss em: ${displaySeconds}s`;
-             }
-         }
-         // NOVO: Atualiza a área de perfil
-         function updateProfileArea() {
-             if (profileNicknameDisplay) profileNicknameDisplay.innerText = `Nick: ${playerNickname}`;
-             if (profileLevelDisplay) profileLevelDisplay.innerText = `Nível Máx: ${highestLevelReached}`;
-             updateProfilePic();
-         }
-          // NOVO: Atualiza a foto do perfil
-          function updateProfilePic() {
-             if (!profilePic) return;
-             const skinData = playerSkins[selectedSkinKey];
-             if (skinData) {
-                  if (skinData.loadedImg && skinData.loadedImg.width > 0) {
-                      profilePic.style.backgroundImage = `url('${skinData.loadedImg.src}')`;
-                      profilePic.style.backgroundColor = 'transparent'; // Remove cor de fundo se imagem carregar
-                  } else if (skinData.img) {
-                      // Tenta usar a URL original como fallback para o perfil
-                       profilePic.style.backgroundImage = `url('${skinData.img}')`;
-                       profilePic.style.backgroundColor = 'transparent';
-                       // Adiciona um onerror para o background-image caso a URL original também falhe
-                       const tempImg = new Image();
-                       tempImg.onerror = () => { setProfileFallbackColor(skinData); };
-                       tempImg.src = skinData.img;
-                  }
-                  else {
-                      setProfileFallbackColor(skinData);
-                  }
-             } else {
-                 // Fallback se skin selecionada for inválida
-                  profilePic.style.backgroundImage = 'none';
-                  profilePic.style.backgroundColor = '#888';
-             }
-         }
-          // NOVO: Função auxiliar para definir cor de fallback no perfil
-         function setProfileFallbackColor(skinData) {
-             if (!profilePic) return;
-              profilePic.style.backgroundImage = 'none'; // Garante que não há imagem de fundo
-             if (skinData && skinData.color) {
-                  profilePic.style.backgroundColor = `rgb(${skinData.color[0]}, ${skinData.color[1]}, ${skinData.color[2]})`;
-             } else {
-                  profilePic.style.backgroundColor = '#555'; // Cor padrão de fallback
-             }
-         }
-
-
-         // --- Função de Habilidade ---
-         function updateAbilityButton() {
-             if (!abilityButton) return;
-
-             const iconLock = abilityButton.querySelector('[data-lucide="lock"]');
-             const iconZap = abilityButton.querySelector('[data-lucide="zap"]');
-             const iconTimer = abilityButton.querySelector('[data-lucide="timer"]');
-             const textSpan = abilityButton.querySelector('.ability-text');
-
-             // Esconde todos os ícones e limpa texto
-             if(iconLock) iconLock.style.display = 'none';
-             if(iconZap) iconZap.style.display = 'none';
-             if(iconTimer) iconTimer.style.display = 'none';
-             if(textSpan) textSpan.textContent = '';
-
-             abilityButton.disabled = true;
-             abilityButton.classList.remove('locked', 'on-cooldown'); // Remove classes de estado
-
-              if ((gameState === 'play' || gameState === 'paused') && abilityAvailable && boss) { // Habilidade liberada E boss na tela E no jogo/pausado
-                   if (abilityReady) {
-                       // Pronto para usar
-                       abilityButton.disabled = false;
-                       if (iconZap) iconZap.style.display = 'inline';
-                       if (textSpan) textSpan.textContent = currentAbilityType === 'dodge' ? 'Esquiva' : 'Tiro';
-                   } else {
-                       // Em Cooldown
-                       abilityButton.disabled = true;
-                       abilityButton.classList.add('on-cooldown');
-                       if (iconTimer) iconTimer.style.display = 'inline';
-                       // Opcional: Mostrar tempo restante no botão
-                       if(textSpan && abilityCooldownTimer > 0) textSpan.textContent = ceil(abilityCooldownTimer / 60); // Ex: mostra segundos restantes
-                   }
+                  skinContainer.style.top = topPos + 'px';
+                  skinContainer.style.right = rightPos + 'px';
+                  skinContainer.style.maxHeight = maxHeight + 'px'; // Usa max-height calculado
               } else {
-                  // Bloqueado (sem boss, sem nível ou fora do jogo)
-                  abilityButton.disabled = true;
-                  abilityButton.classList.add('locked');
-                  if (iconLock) iconLock.style.display = 'inline';
+                  skinContainer.style.display = "none";
+              }
+          }
+
+          function populateSkinContainer() {
+              if (!skinContainer) { console.error("populateSkinContainer: Container não encontrado!"); return; }
+              skinContainer.innerHTML = '';
+              console.log("populateSkinContainer: Populando skins. Nível Máximo:", highestLevelReached); // USA NÍVEL MÁXIMO
+
+              let skinsExist = false;
+              for (const key in playerSkins) {
+                  skinsExist = true;
+                  const skin = playerSkins[key];
+                  const isUnlocked = highestLevelReached >= skin.unlockLevel; // Verifica contra NÍVEL MÁXIMO
+
+                  const entryDiv = document.createElement('div');
+                  entryDiv.classList.add('skin-entry');
+                  entryDiv.dataset.skinKey = key;
+                  if (!isUnlocked) entryDiv.classList.add('locked');
+                  if (key === selectedSkinKey) entryDiv.classList.add('selected');
+
+                  const img = document.createElement('img');
+                  img.classList.add('skinOption');
+                  img.alt = skin.name;
+                  img.title = `${skin.name} (${skin.rarity}) - ${isUnlocked ? 'Desbloqueada' : `Nível ${skin.unlockLevel}`}`;
+
+                  // Lógica de Imagem com Fallback Melhorado
+                  if (skin.loadedImg && skin.loadedImg.width > 0 && skin.loadedImg.height > 0) { // Verifica se p5.Image é válida
+                      img.src = skin.loadedImg.src;
+                      // console.log(`Skin ${key}: Usando loadedImg.src`); // Log opcional
+                  } else {
+                       // Tenta usar URL original se existir, mesmo que tenha falhado no preload
+                       if (skin.img) {
+                           img.src = skin.img; // Usa a URL original
+                           console.log(`Skin ${key}: Tentando usar skin.img URL (${skin.img})`);
+                       } else {
+                           // Sem URL original, usa placeholder de cor/face via placehold.co
+                            const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
+                            const faceText = skin.face ? encodeURIComponent(skin.face) : '?';
+                            const placeholderUrl = `https://placehold.co/60x60/${bgColor}/000?text=${faceText}&font=pressstart2p`;
+                            img.src = placeholderUrl;
+                            console.log(`Skin ${key}: Usando placeholder URL (${placeholderUrl})`);
+                       }
+                  }
+
+                  // Fallback final usando onerror no elemento img
+                  img.onerror = function() {
+                      console.warn(`populateSkinContainer: Falha ao carregar ${this.src}. Usando placeholder final.`);
+                       // Define um placeholder genérico ou de cor via placehold.co
+                       const bgColor = skin.color ? `${skin.color[0].toString(16).padStart(2, '0')}${skin.color[1].toString(16).padStart(2, '0')}${skin.color[2].toString(16).padStart(2, '0')}` : 'cccccc';
+                       const faceText = skin.face ? encodeURIComponent(skin.face) : 'ERR';
+                       const fallbackUrl = `https://placehold.co/60x60/${bgColor}/333?text=${faceText}&font=pressstart2p`;
+                       // Evita loop infinito se o próprio placeholder falhar (improvável)
+                       if (this.src !== fallbackUrl) {
+                           this.src = fallbackUrl;
+                       }
+                      this.onerror = null; // Remove o handler para evitar loops
+                  };
+
+
+                  const nameSpan = document.createElement('span'); nameSpan.classList.add('skin-name'); nameSpan.innerText = skin.name;
+                  const raritySpan = document.createElement('span'); raritySpan.classList.add('skin-rarity', `rarity-${skin.rarity}`); raritySpan.innerText = skin.rarity;
+
+                  entryDiv.appendChild(img);
+                  entryDiv.appendChild(nameSpan);
+                  entryDiv.appendChild(raritySpan);
+
+                  if (!isUnlocked) {
+                      const lockOverlay = document.createElement('div'); lockOverlay.classList.add('lock-overlay');
+                      const lockIcon = document.createElement('i'); lockIcon.setAttribute('data-lucide', 'lock');
+                      const unlockSpan = document.createElement('span'); unlockSpan.classList.add('skin-unlock'); unlockSpan.innerText = `Nível ${skin.unlockLevel}`;
+                      lockOverlay.appendChild(lockIcon); lockOverlay.appendChild(unlockSpan);
+                      entryDiv.appendChild(lockOverlay);
+                  } else {
+                      entryDiv.onclick = () => selectSkin(key);
+                  }
+                  skinContainer.appendChild(entryDiv);
               }
 
-             // Recria ícones Lucide para garantir visibilidade correta
-             if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+              if (!skinsExist) { skinContainer.innerHTML = '<span>Nenhuma skin encontrada.</span>'; }
+
+              if (typeof lucide !== 'undefined') {
+                  try { lucide.createIcons(); } catch(e) { console.warn("Erro ao criar ícones Lucide:", e); }
+              } else { console.warn("populateSkinContainer: Biblioteca Lucide não carregada."); }
+          }
+
+
+          function selectSkin(key) {
+              if (!playerSkins[key]) { console.warn("selectSkin: Skin inválida:", key); return; }
+              // Verifica NÍVEL MÁXIMO para desbloqueio
+              if (highestLevelReached < playerSkins[key].unlockLevel) {
+                  console.log("selectSkin: Skin bloqueada (Nível Máximo insuficiente):", key);
+                  return; // Não seleciona
+              }
+              selectedSkinKey = key;
+              console.log("selectSkin: Skin selecionada:", selectedSkinKey);
+              if (player) { player.setAppearance(playerSkins[selectedSkinKey]); }
+              updateSelectedSkinVisual();
+              updateProfilePic(); // NOVO: Atualiza foto do perfil
+              saveGameData(); // Salva a skin selecionada
+              if(skinContainer) skinContainer.style.display = "none";
+          }
+
+          function updateSelectedSkinVisual() {
+              if (!skinContainer || skinContainer.style.display === 'none') return; // Otimização: só atualiza se visível
+              document.querySelectorAll('.skin-entry').forEach(el => el.classList.remove('selected'));
+              const selectedEntry = skinContainer.querySelector(`.skin-entry[data-skin-key="${selectedSkinKey}"]`);
+              if (selectedEntry) { selectedEntry.classList.add('selected'); }
+          }
+
+          // --- Funções de UI Update ---
+          function updateScoreDisplay() { if (scoreDisplay) scoreDisplay.innerText = "Score: " + score; }
+          function updateLevelDisplay() { if (levelDisplay) levelDisplay.innerText = "Nível: " + currentLevel; }
+          function updateLivesDisplay() { if (livesDisplay) livesDisplay.innerText = "Vidas: " + max(0, playerLives + (hasRevived ? 0 : 1) -1 ); } // Mostra 1 se revive disponível, 0 se não
+          function updateTimerDisplay() {
+              if (timerDisplay) {
+                  let minutes = floor(gameTimer / 60);
+                  let seconds = gameTimer % 60;
+                  timerDisplay.innerText = `Tempo: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+              }
+          }
+          function updateBossCountdownDisplay(remainingSeconds) {
+              if (bossCountdownDisplay) {
+                  let displaySeconds = max(0, floor(remainingSeconds));
+                  bossCountdownDisplay.innerText = `Boss em: ${displaySeconds}s`;
+              }
+          }
+          // NOVO: Atualiza a área de perfil
+          function updateProfileArea() {
+              if (profileNicknameDisplay) profileNicknameDisplay.innerText = `Nick: ${playerNickname}`;
+              if (profileLevelDisplay) profileLevelDisplay.innerText = `Nível Máx: ${highestLevelReached}`;
+              updateProfilePic();
+          }
+           // NOVO: Atualiza a foto do perfil
+           function updateProfilePic() {
+              if (!profilePic) return;
+              const skinData = playerSkins[selectedSkinKey];
+              if (skinData) {
+                   if (skinData.loadedImg && skinData.loadedImg.width > 0) {
+                       profilePic.style.backgroundImage = `url('${skinData.loadedImg.src}')`;
+                       profilePic.style.backgroundColor = 'transparent'; // Remove cor de fundo se imagem carregar
+                   } else if (skinData.img) {
+                       // Tenta usar a URL original como fallback para o perfil
+                        profilePic.style.backgroundImage = `url('${skinData.img}')`;
+                        profilePic.style.backgroundColor = 'transparent';
+                        // Adiciona um onerror para o background-image caso a URL original também falhe
+                        const tempImg = new Image();
+                        tempImg.onerror = () => { setProfileFallbackColor(skinData); };
+                        tempImg.src = skinData.img;
+                   }
+                   else {
+                       setProfileFallbackColor(skinData);
+                   }
+              } else {
+                  // Fallback se skin selecionada for inválida
+                   profilePic.style.backgroundImage = 'none';
+                   profilePic.style.backgroundColor = '#888';
+              }
+          }
+           // NOVO: Função auxiliar para definir cor de fallback no perfil
+          function setProfileFallbackColor(skinData) {
+              if (!profilePic) return;
+               profilePic.style.backgroundImage = 'none'; // Garante que não há imagem de fundo
+              if (skinData && skinData.color) {
+                   profilePic.style.backgroundColor = `rgb(${skinData.color[0]}, ${skinData.color[1]}, ${skinData.color[2]})`;
+              } else {
+                   profilePic.style.backgroundColor = '#555'; // Cor padrão de fallback
+              }
+          }
+
+
+          // --- Função de Habilidade ---
+          function updateAbilityButton() {
+              if (!abilityButton) return;
+
+              const iconLock = abilityButton.querySelector('[data-lucide="lock"]');
+              const iconZap = abilityButton.querySelector('[data-lucide="zap"]');
+              const iconTimer = abilityButton.querySelector('[data-lucide="timer"]');
+              const textSpan = abilityButton.querySelector('.ability-text');
+
+              // Esconde todos os ícones e limpa texto
+              if(iconLock) iconLock.style.display = 'none';
+              if(iconZap) iconZap.style.display = 'none';
+              if(iconTimer) iconTimer.style.display = 'none';
+              if(textSpan) textSpan.textContent = '';
+
+              abilityButton.disabled = true;
+              abilityButton.classList.remove('locked', 'on-cooldown'); // Remove classes de estado
+
+               if ((gameState === 'play' || gameState === 'paused') && abilityAvailable && boss) { // Habilidade liberada E boss na tela E no jogo/pausado
+                    if (abilityReady) {
+                        // Pronto para usar
+                        abilityButton.disabled = false;
+                        if (iconZap) iconZap.style.display = 'inline';
+                        if (textSpan) textSpan.textContent = currentAbilityType === 'dodge' ? 'Esquiva' : 'Tiro';
+                    } else {
+                        // Em Cooldown
+                        abilityButton.disabled = true;
+                        abilityButton.classList.add('on-cooldown');
+                        if (iconTimer) iconTimer.style.display = 'inline';
+                        // Mostrar tempo restante no botão
+                        if(textSpan && abilityCooldownTimer > 0) textSpan.textContent = ceil(abilityCooldownTimer / 60); // Ex: mostra segundos restantes
+                        else if (textSpan) textSpan.textContent = '...'; // Indica que está em cooldown mas perto do 0
+                    }
+               } else {
+                   // Bloqueado (sem boss, sem nível ou fora do jogo)
+                   abilityButton.disabled = true;
+                   abilityButton.classList.add('locked');
+                   if (iconLock) iconLock.style.display = 'inline';
+                    // Mensagem sobre o bloqueio
+                    if (textSpan && !abilityAvailable && currentLevel < 6) textSpan.textContent = `Nv ${currentLevel < 3 ? 3 : 6}`; // Mostra nível necessário
+                    else if (textSpan && abilityAvailable && !boss) textSpan.textContent = 'Só c/ Boss'; // Indica que precisa do Boss
+               }
+
+              // Recria ícones Lucide para garantir visibilidade correta
+              if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+          }
+
+
+          // *** FUNÇÃO useAbility MODIFICADA ***
+          function useAbility() {
+              // Verifica se pode usar AGORA (pronto, boss existe, jogo rodando)
+              if (!abilityReady || !boss || gameState !== 'play') {
+                  console.log("Não pode usar habilidade agora.");
+                  // Informa o usuário PORQUE não pode usar
+                  if (abilityAvailable && currentAbilityType === 'kill' && !boss) {
+                       showMessage("Habilidade de matar só funciona contra o Boss!", 120);
+                  } else if (!abilityReady) {
+                       showMessage("Habilidade Recarregando!", 90);
+                  } else if (!abilityAvailable) {
+                      showMessage(`Libera no Nível ${currentLevel < 3 ? 3 : 6}!`, 120);
+                  }
+                  return;
+              }
+
+              console.log(`Tentando usar habilidade: ${currentAbilityType}`);
+              abilityReady = false; // Consome a prontidão SEMPRE ao clicar
+              abilityCooldownTimer = ABILITY_COOLDOWN; // Inicia cooldown SEMPRE ao clicar
+              updateAbilityButton(); // Atualiza o botão para mostrar cooldown IMEDIATAMENTE
+
+              if (currentAbilityType === 'dodge') {
+                  // Efeito sonoro/visual de esquiva?
+                   player.x += DODGE_DISTANCE; // Move para frente
+                  // Garante que não saia da tela
+                  player.x = constrain(player.x, player.w / 2, width - player.w / 2); // Usa w atual
+                  console.log("Esquiva usada!");
+                  showMessage("Esquiva!", 90);
+                   // Adiciona efeito visual rápido (partículas roxas?)
+                   for(let i=0; i<15; i++) { // Burst de partículas
+                       let angle = random(TWO_PI);
+                       let speed = random(2, 5);
+                       playerParticles.push(new PlayerParticle(player.x, player.y, cos(angle)*speed, sin(angle)*speed, 20, [171, 71, 188])); // Roxo, vida curta
+                   }
+
+              } else if (currentAbilityType === 'kill') {
+                  killAbilityClicks++; // Incrementa o contador de cliques PARA MATAR
+                  console.log(`Clique para matar chefe: ${killAbilityClicks}/3`);
+                  showMessage(`Clique Matar Boss: ${killAbilityClicks}/3`, 90); // Mensagem de feedback
+
+                  if (killAbilityClicks >= 3) {
+                      if (boss) {
+                          boss.takeDamage(BOSS_MAX_HEALTH); // Causa dano fatal
+                          console.log("Tiro certeiro disparado! Boss deve morrer.");
+                          showMessage("CHEFE MORREU!", 150); // Mensagem de sucesso
+                          // killAbilityClicks = 0; // Reseta implicitamente quando boss desaparece ou jogo reinicia
+                      }
+                  } else {
+                      // Opcional: Som ou efeito visual de clique sem matar ainda?
+                      console.log("Ainda não foram 3 cliques para matar.");
+                  }
+              }
+
+              // updateAbilityButton(); // Movido para cima para feedback imediato do cooldown
          }
 
 
-         function useAbility() {
-             if (!abilityReady || !boss || gameState !== 'play') {
-                 console.log("Não pode usar habilidade agora.");
-                 return;
-             }
+          // --- Local Storage ---
+          function saveGameData() {
+              try {
+                  localStorage.setItem('yuriDash_highestLevel', highestLevelReached.toString());
+                  localStorage.setItem('yuriDash_selectedSkin', selectedSkinKey);
+                  localStorage.setItem('yuriDash_nickname', playerNickname);
+                  localStorage.setItem('yuriDash_particleColor', JSON.stringify(playerParticleColor));
+                  // console.log("Dados salvos no localStorage.");
+              } catch (e) {
+                  console.error("Erro ao salvar dados no localStorage:", e);
+              }
+          }
 
-             console.log(`Usando habilidade: ${currentAbilityType}`);
-             showMessage(`Habilidade: ${currentAbilityType === 'dodge' ? 'Esquiva' : 'Tiro'}!`, 90); // NOVO: Mensagem
-             abilityReady = false;
-             abilityCooldownTimer = ABILITY_COOLDOWN; // Inicia cooldown
+          function loadGameData() {
+              try {
+                  const savedLevel = localStorage.getItem('yuriDash_highestLevel');
+                  if (savedLevel) { highestLevelReached = parseInt(savedLevel, 10) || 1; }
 
-             if (currentAbilityType === 'dodge') {
-                 // Efeito sonoro/visual de esquiva?
-                  player.x += DODGE_DISTANCE; // Move para frente
-                 // Garante que não saia da tela
-                 player.x = constrain(player.x, player.w / 2, width - player.w / 2); // Usa w atual
-                 console.log("Esquiva usada!");
-                  // Adiciona efeito visual rápido (partículas roxas?)
-                  for(let i=0; i<15; i++) { // Burst de partículas
-                      let angle = random(TWO_PI);
-                      let speed = random(2, 5);
-                      playerParticles.push(new PlayerParticle(player.x, player.y, cos(angle)*speed, sin(angle)*speed, 20, [171, 71, 188])); // Roxo, vida curta
+                  const savedSkin = localStorage.getItem('yuriDash_selectedSkin');
+                  // Valida se a skin salva existe antes de aplicá-la
+                  if (savedSkin && playerSkins[savedSkin]) {
+                      // Valida também se o nível salvo permite usar a skin salva
+                      if (highestLevelReached >= playerSkins[savedSkin].unlockLevel) {
+                           selectedSkinKey = savedSkin;
+                      } else {
+                           selectedSkinKey = "yuri_comum"; // Volta para comum se nível não permite mais
+                      }
+                  } else {
+                      selectedSkinKey = "yuri_comum"; // Fallback para skin padrão
                   }
 
-             } else if (currentAbilityType === 'kill') {
-                 // Efeito sonoro/visual de tiro?
-                  if (boss) {
-                      boss.takeDamage(BOSS_MAX_HEALTH); // Causa dano fatal
-                      console.log("Tiro certeiro disparado!");
-                      // Adiciona efeito visual (linha do tiro, explosão no boss?)
-                     // Ex: Linha simples (precisaria de uma classe temporária para desenhar)
-                 }
-             }
+                  const savedNick = localStorage.getItem('yuriDash_nickname');
+                  if (savedNick) { playerNickname = savedNick; }
 
-             updateAbilityButton(); // Atualiza estado do botão (mostrar cooldown)
-         }
+                  const savedColor = localStorage.getItem('yuriDash_particleColor');
+                  if (savedColor) {
+                      try {
+                          const parsedColor = JSON.parse(savedColor);
+                          // Valida se é um array de 3 números
+                          if (Array.isArray(parsedColor) && parsedColor.length === 3 && parsedColor.every(c => typeof c === 'number')) {
+                              playerParticleColor = parsedColor;
+                          }
+                      } catch (e) { console.warn("Erro ao parsear cor salva:", e); }
+                  }
 
+                  console.log("Dados carregados do localStorage.");
+              } catch (e) {
+                  console.error("Erro ao carregar dados do localStorage:", e);
+              }
+          }
 
-         // --- Local Storage ---
-         function saveGameData() {
-             try {
-                 localStorage.setItem('yuriDash_highestLevel', highestLevelReached.toString());
-                 localStorage.setItem('yuriDash_selectedSkin', selectedSkinKey);
-                 localStorage.setItem('yuriDash_nickname', playerNickname);
-                 localStorage.setItem('yuriDash_particleColor', JSON.stringify(playerParticleColor));
-                 // console.log("Dados salvos no localStorage.");
-             } catch (e) {
-                 console.error("Erro ao salvar dados no localStorage:", e);
-             }
-         }
+          // --- Setup Cores Partículas ---
+          function setupParticleColorSelector() {
+              if (!particleColorSelector) return;
+              particleColorSelector.innerHTML = '<label>Cor Partícula:</label>'; // Limpa e adiciona label
 
-         function loadGameData() {
-             try {
-                 const savedLevel = localStorage.getItem('yuriDash_highestLevel');
-                 if (savedLevel) { highestLevelReached = parseInt(savedLevel, 10) || 1; }
+              Object.entries(PLAYER_PARTICLE_COLORS).forEach(([name, color]) => {
+                  const colorDiv = document.createElement('div');
+                  colorDiv.classList.add('color-option');
+                  colorDiv.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                  colorDiv.dataset.color = JSON.stringify(color); // Armazena a cor como string JSON
+                  colorDiv.title = name.charAt(0).toUpperCase() + name.slice(1); // Capitaliza nome para tooltip
 
-                 const savedSkin = localStorage.getItem('yuriDash_selectedSkin');
-                 // Valida se a skin salva existe antes de aplicá-la
-                 if (savedSkin && playerSkins[savedSkin]) {
-                     // Valida também se o nível salvo permite usar a skin salva
-                     if (highestLevelReached >= playerSkins[savedSkin].unlockLevel) {
-                          selectedSkinKey = savedSkin;
-                     } else {
-                          selectedSkinKey = "yuri_comum"; // Volta para comum se nível não permite mais
-                     }
-                 } else {
-                     selectedSkinKey = "yuri_comum"; // Fallback para skin padrão
-                 }
+                  // Marca a cor selecionada atualmente
+                  if (JSON.stringify(color) === JSON.stringify(playerParticleColor)) {
+                      colorDiv.classList.add('selected');
+                  }
 
-                 const savedNick = localStorage.getItem('yuriDash_nickname');
-                 if (savedNick) { playerNickname = savedNick; }
+                  colorDiv.onclick = () => {
+                      playerParticleColor = color;
+                      // Remove 'selected' de todos
+                      document.querySelectorAll('#particleColorSelector .color-option').forEach(el => el.classList.remove('selected'));
+                      // Adiciona 'selected' ao clicado
+                      colorDiv.classList.add('selected');
+                      saveGameData(); // Salva a nova cor
+                      console.log("Cor da partícula alterada para:", name);
+                  };
+                  particleColorSelector.appendChild(colorDiv);
+              });
+          }
 
-                 const savedColor = localStorage.getItem('yuriDash_particleColor');
-                 if (savedColor) {
-                     try {
-                         const parsedColor = JSON.parse(savedColor);
-                         // Valida se é um array de 3 números
-                         if (Array.isArray(parsedColor) && parsedColor.length === 3 && parsedColor.every(c => typeof c === 'number')) {
-                             playerParticleColor = parsedColor;
-                         }
-                     } catch (e) { console.warn("Erro ao parsear cor salva:", e); }
-                 }
+          // --- Funções Utilitárias ---
+          function createStars(){
+              stars = [];
+              let numStars = constrain(floor(width * height / 3000), 50, 300);
+              for (let i = 0; i < numStars; i++) {
+                  stars.push({ x: random(width), y: random(height), size: random(1, 3.5), speed: random(0.3, 1.2) });
+              }
+              console.log("createStars: Estrelas criadas:", stars.length);
+          }
 
-                 console.log("Dados carregados do localStorage.");
-             } catch (e) {
-                 console.error("Erro ao carregar dados do localStorage:", e);
-             }
-         }
+          // --- Classes do Jogo ---
+          class Player {
+              constructor() {
+                  this.baseSize = constrain(height * 0.06, 30, 50);
+                  this.w = this.baseSize; // Largura atual
+                  this.h = this.baseSize; // Altura atual
+                  this.x = width * 0.15;
+                  this.groundLevel = height - groundMargin;
+                  this.y = this.groundLevel - this.h / 2;
+                  this.velocity = 0;
+                  this.gravity = height * 0.0011; // Gravidade
+                  this.jumpForce = -height * 0.025; // Força do pulo inicial
+                  // **PULO DUPLO:** Contador de pulos restantes (já funciona como não-automático)
+                  this.jumpsLeft = 2;
+                  this.onGround = true; // Para lógica inicial, mas jumpsLeft controla o pulo
+                  this.angle = 0;
+                  this.rotationSpeed = 0;
+                  this.skinImage = null;
+                  this.color = [0, 220, 255];
+                  this.face = '^_^';
+                  this.hitboxPadding = 4; // Reduz padding para colisão mais precisa
+                  this.isFlashing = false; // Piscando (invencibilidade)
+                  this.flashTimer = 0;
 
-         // --- Setup Cores Partículas ---
-         function setupParticleColorSelector() {
-             if (!particleColorSelector) return;
-             particleColorSelector.innerHTML = '<label>Cor Partícula:</label>'; // Limpa e adiciona label
+                  // Squash & Stretch / Idle Bob
+                  this.squashFactor = 1.0; // 1 = normal, >1 = tall/thin, <1 = short/fat
+                  this.targetSquashFactor = 1.0;
+                  this.squashSpeed = 0.2;
+                  this.idleBobTimer = random(TWO_PI); // Random start phase for bobbing
+                  this.idleBobAmount = 1.5; // Pixels to bob
+              }
 
-             Object.entries(PLAYER_PARTICLE_COLORS).forEach(([name, color]) => {
-                 const colorDiv = document.createElement('div');
-                 colorDiv.classList.add('color-option');
-                 colorDiv.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-                 colorDiv.dataset.color = JSON.stringify(color); // Armazena a cor como string JSON
-                 colorDiv.title = name.charAt(0).toUpperCase() + name.slice(1); // Capitaliza nome para tooltip
+              setAppearance(skinData) {
+                  this.color = skinData.color || [255,0,0];
+                  this.face = skinData.face || 'ERR';
+                   this.skinImage = (skinData.loadedImg && skinData.loadedImg.width > 0) ? skinData.loadedImg : null;
+                   // console.log(`Player appearance set to: ${skinData.name}. Image ${this.skinImage ? 'loaded' : 'not available'}.`);
+              }
 
-                 // Marca a cor selecionada atualmente
-                 if (JSON.stringify(color) === JSON.stringify(playerParticleColor)) {
-                     colorDiv.classList.add('selected');
-                 }
+              isInvincible() {
+                  return this.isFlashing && this.flashTimer > 0;
+              }
 
-                 colorDiv.onclick = () => {
-                     playerParticleColor = color;
-                     // Remove 'selected' de todos
-                     document.querySelectorAll('#particleColorSelector .color-option').forEach(el => el.classList.remove('selected'));
-                     // Adiciona 'selected' ao clicado
-                     colorDiv.classList.add('selected');
-                     saveGameData(); // Salva a nova cor
-                     console.log("Cor da partícula alterada para:", name);
-                 };
-                 particleColorSelector.appendChild(colorDiv);
-             });
-         }
+              update() {
+                  this.groundLevel = height - groundMargin;
+                  let wasOnGround = this.onGround; // Guarda estado anterior para detectar pouso
 
-         // --- Funções Utilitárias ---
-         function createStars(){
-             stars = [];
-             let numStars = constrain(floor(width * height / 3000), 50, 300);
-             for (let i = 0; i < numStars; i++) {
-                 stars.push({ x: random(width), y: random(height), size: random(1, 3.5), speed: random(0.3, 1.2) });
-             }
-             console.log("createStars: Estrelas criadas:", stars.length);
-         }
-
-         // --- Classes do Jogo ---
-         class Player {
-             constructor() {
-                 this.baseSize = constrain(height * 0.06, 30, 50);
-                 this.w = this.baseSize; // Largura atual
-                 this.h = this.baseSize; // Altura atual
-                 this.x = width * 0.15;
-                 this.groundLevel = height - groundMargin;
-                 this.y = this.groundLevel - this.h / 2;
-                 this.velocity = 0;
-                 this.gravity = height * 0.0011; // Gravidade
-                 this.jumpForce = -height * 0.025; // Força do pulo inicial
-                 // **PULO DUPLO:** Contador de pulos restantes (já funciona como não-automático)
-                 this.jumpsLeft = 2;
-                 this.onGround = true; // Para lógica inicial, mas jumpsLeft controla o pulo
-                 this.angle = 0;
-                 this.rotationSpeed = 0;
-                 this.skinImage = null;
-                 this.color = [0, 220, 255];
-                 this.face = '^_^';
-                 this.hitboxPadding = 4; // Reduz padding para colisão mais precisa
-                 this.isFlashing = false; // Piscando (invencibilidade)
-                 this.flashTimer = 0;
-
-                 // Squash & Stretch / Idle Bob
-                 this.squashFactor = 1.0; // 1 = normal, >1 = tall/thin, <1 = short/fat
-                 this.targetSquashFactor = 1.0;
-                 this.squashSpeed = 0.2;
-                 this.idleBobTimer = random(TWO_PI); // Random start phase for bobbing
-                 this.idleBobAmount = 1.5; // Pixels to bob
-             }
-
-             setAppearance(skinData) {
-                 this.color = skinData.color || [255,0,0];
-                 this.face = skinData.face || 'ERR';
-                  this.skinImage = (skinData.loadedImg && skinData.loadedImg.width > 0) ? skinData.loadedImg : null;
-                  // console.log(`Player appearance set to: ${skinData.name}. Image ${this.skinImage ? 'loaded' : 'not available'}.`);
-             }
-
-             isInvincible() {
-                 return this.isFlashing && this.flashTimer > 0;
-             }
-
-             update() {
-                 this.groundLevel = height - groundMargin;
-                 let wasOnGround = this.onGround; // Guarda estado anterior para detectar pouso
-
-                 // Squash Factor Lerp
-                 this.squashFactor = lerp(this.squashFactor, this.targetSquashFactor, this.squashSpeed);
-                 // Slowly return to normal if target is 1 (prevents sticking)
-                 if (abs(this.targetSquashFactor - 1.0) < 0.01 && abs(this.squashFactor - 1.0) > 0.01) {
-                     this.targetSquashFactor = 1.0; // Ensure target is exactly 1
-                     this.squashFactor = lerp(this.squashFactor, 1.0, this.squashSpeed * 0.5);
-                 }
-                 // Apply squash factor to dimensions (maintain area approximately)
-                 this.h = this.baseSize * sqrt(this.squashFactor);
-                 this.w = this.baseSize / sqrt(this.squashFactor);
+                  // Squash Factor Lerp
+                  this.squashFactor = lerp(this.squashFactor, this.targetSquashFactor, this.squashSpeed);
+                  // Slowly return to normal if target is 1 (prevents sticking)
+                  if (abs(this.targetSquashFactor - 1.0) < 0.01 && abs(this.squashFactor - 1.0) > 0.01) {
+                      this.targetSquashFactor = 1.0; // Ensure target is exactly 1
+                      this.squashFactor = lerp(this.squashFactor, 1.0, this.squashSpeed * 0.5);
+                  }
+                  // Apply squash factor to dimensions (maintain area approximately)
+                  this.h = this.baseSize * sqrt(this.squashFactor);
+                  this.w = this.baseSize / sqrt(this.squashFactor);
 
 
-                 // Physics (Apply Gravity)
-                 // Only apply gravity if not exactly on ground to prevent sinking slightly
-                 if (this.y + this.h / 2 < this.groundLevel || this.velocity < 0) {
-                     this.velocity += this.gravity;
-                      this.onGround = false; // Se está caindo ou subindo, não está no chão
-                 }
+                  // Physics (Apply Gravity)
+                  // Only apply gravity if not exactly on ground to prevent sinking slightly
+                  if (this.y + this.h / 2 < this.groundLevel || this.velocity < 0) {
+                      this.velocity += this.gravity;
+                       this.onGround = false; // Se está caindo ou subindo, não está no chão
+                  }
 
-                 // Apply Velocity
-                 this.y += this.velocity;
+                  // Apply Velocity
+                  this.y += this.velocity;
 
-                 // Rotation based on velocity (if not on ground)
-                 if (!this.onGround) {
-                    this.rotationSpeed = this.velocity * 0.02;
-                     // Reset target squash factor mid-air
-                     if(this.targetSquashFactor !== 1.0 && this.velocity > 0) { // Start returning to normal after jump peak
-                          this.targetSquashFactor = 1.0;
-                     }
-                 } else { // Se estava no chão
-                    this.rotationSpeed = 0;
-                    this.angle = lerp(this.angle, 0, 0.2); // Gradually reset angle on ground
-                 }
-                 this.angle += this.rotationSpeed;
+                  // Rotation based on velocity (if not on ground)
+                  if (!this.onGround) {
+                     this.rotationSpeed = this.velocity * 0.02;
+                      // Reset target squash factor mid-air
+                      if(this.targetSquashFactor !== 1.0 && this.velocity > 0) { // Start returning to normal after jump peak
+                           this.targetSquashFactor = 1.0;
+                      }
+                  } else { // Se estava no chão
+                     this.rotationSpeed = 0;
+                     this.angle = lerp(this.angle, 0, 0.2); // Gradually reset angle on ground
+                  }
+                  this.angle += this.rotationSpeed;
 
 
-                 // Ground Check & Correction
-                 if (this.y + this.h / 2 >= this.groundLevel && this.velocity >= 0) { // Check if landed or below ground
-                     this.y = this.groundLevel - this.h / 2; // Correct position precisely
-                     this.velocity = 0;                     // Stop vertical movement
+                  // Ground Check & Correction
+                  if (this.y + this.h / 2 >= this.groundLevel && this.velocity >= 0) { // Check if landed or below ground
+                      this.y = this.groundLevel - this.h / 2; // Correct position precisely
+                      this.velocity = 0;                      // Stop vertical movement
 
-                     if (!wasOnGround) { // Just Landed
-                         this.angle = 0;         // Reset angle immediately
-                         this.rotationSpeed = 0;
-                         // **PULO DUPLO: Reseta pulos ao tocar o chão**
-                         this.jumpsLeft = 2;
-                         // console.log("Landed. Jumps reset:", this.jumpsLeft);
-                         this.onGround = true; // Marca que está no chão
+                      if (!wasOnGround) { // Just Landed
+                          this.angle = 0;        // Reset angle immediately
+                          this.rotationSpeed = 0;
+                          // **PULO DUPLO: Reseta pulos ao tocar o chão**
+                          this.jumpsLeft = 2;
+                          // console.log("Landed. Jumps reset:", this.jumpsLeft);
+                          this.onGround = true; // Marca que está no chão
 
-                         // Landing Squash Effect
-                         this.targetSquashFactor = 0.7; // Squash down
-                          setTimeout(() => { this.targetSquashFactor = 1.0; }, 80); // Return to normal quickly
-                         // Landing Particles
-                         for(let i=0; i<8; i++){
-                              playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-2, 2), random(-1, -3), 30));
-                         }
-                     }
-                     this.onGround = true; // Ensure it stays true if already on ground
-                 }
+                          // Landing Squash Effect
+                          this.targetSquashFactor = 0.7; // Squash down
+                           setTimeout(() => { this.targetSquashFactor = 1.0; }, 80); // Return to normal quickly
+                          // Landing Particles
+                          for(let i=0; i<8; i++){
+                               playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-2, 2), random(-1, -3), 30));
+                          }
+                      }
+                      this.onGround = true; // Ensure it stays true if already on ground
+                  }
 
-                 // Ceiling Check
-                 if (this.y - this.h / 2 < 0) {
-                     this.y = this.h / 2;
-                     if (this.velocity < 0) this.velocity = 0; // Stop upward movement if hitting ceiling
-                     // Optional: Ceiling hit squash
-                     this.targetSquashFactor = 0.8;
-                      setTimeout(() => { this.targetSquashFactor = 1.0; }, 100);
-                 }
+                  // Ceiling Check
+                  if (this.y - this.h / 2 < 0) {
+                      this.y = this.h / 2;
+                      if (this.velocity < 0) this.velocity = 0; // Stop upward movement if hitting ceiling
+                      // Optional: Ceiling hit squash
+                      this.targetSquashFactor = 0.8;
+                       setTimeout(() => { this.targetSquashFactor = 1.0; }, 100);
+                  }
 
-                 // Idle Bobbing
-                 if (this.onGround) {
-                     this.idleBobTimer += 0.1; // Speed of bobbing
-                     // Only apply bobbing if NOT flashing (looks weird otherwise)
-                     if (!this.isFlashing) {
+                  // Idle Bobbing
+                  if (this.onGround) {
+                      this.idleBobTimer += 0.1; // Speed of bobbing
+                      // Only apply bobbing if NOT flashing (looks weird otherwise)
+                      if (!this.isFlashing) {
                           // Recalculate Y based on bobbing IF velocity is zero (truly idle)
                           if(this.velocity === 0) {
                                this.y = (this.groundLevel - this.h / 2) + sin(this.idleBobTimer) * this.idleBobAmount;
                           }
-                     }
-                 }
-
-                 // Movement Particles (Trail)
-                 if (!this.onGround && abs(this.velocity) > 1) {
-                     if (frameCount % 4 === 0) {
-                         let px = this.x - (this.w / 3 * (this.velocity > 0 ? -1 : 1));
-                         let py = this.y + this.h / 3;
-                         let vx = random(-0.5, 0.5) - (this.velocity * 0.01);
-                         let vy = random(0.5, 1.5);
-                          playerParticles.push(new PlayerParticle(px, py, vx, vy));
-                     }
-                 }
-
-                 // Flash Timer (Invincibility)
-                 if (this.isFlashing) {
-                     this.flashTimer--;
-                     if (this.flashTimer <= 0) {
-                         this.isFlashing = false;
-                     }
-                 }
-             }
-
-             // **PULO / PULO DUPLO:** Lógica já implementada corretamente.
-             jump() {
-                 // Permite pular se ainda tiver pulos restantes (do chão ou do ar)
-                 if (this.jumpsLeft > 0) {
-                     let currentJumpForce = this.jumpForce;
-                     // Opcional: Deixar o segundo pulo mais forte/alto?
-                     // if (this.jumpsLeft === 1) { // Se for o segundo pulo (1 restante antes de pular)
-                     //    currentJumpForce *= 1.1; // Ex: 10% mais forte
-                     // }
-
-                     this.velocity = currentJumpForce; // Aplica força do pulo
-                     this.onGround = false;         // Definitivamente no ar agora
-                     this.jumpsLeft--;              // Consome um pulo
-                     // console.log("Jump performed. Jumps left:", this.jumpsLeft);
-
-                     // Jump Stretch Effect (pode ajustar)
-                     this.targetSquashFactor = 1.4; // Stretch tall
-
-                     // Jump Particles (mais no segundo pulo?)
-                     let numParticles = (this.jumpsLeft === 1) ? 6 : 8; // 6 no 1º pulo, 8 no 2º
-                     for(let i=0; i < numParticles; i++){
-                         playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-1.5, 1.5), random(1, 3.5), 40));
-                     }
-                 } else {
-                     // console.log("No jumps left.");
-                 }
-             }
-
-
-             flash(duration = 15) { // Aceita duração
-                  this.isFlashing = true;
-                  this.flashTimer = duration; // Duration in frames
-             }
-
-             show(forceOpaque = false) {
-                  push();
-                  translate(this.x, this.y);
-                  rotate(this.angle);
-                  rectMode(CENTER); // Important for squash/stretch scaling
-
-                  // Flash Logic (Invincibility)
-                  let showPlayer = true;
-                  if (this.isFlashing && !forceOpaque) {
-                       showPlayer = floor(this.flashTimer / 4) % 2 === 0; // Blink based on timer intervals
-                  }
-
-                  // Efeito de Luz Branca (Reviver)
-                   if (reviveLightTimer > 0) {
-                        let lightAlpha = map(reviveLightTimer, 0, 35, 0, 150);
-                        let lightSizeFactor = map(reviveLightTimer, 35, 0, 2.5, 3.5); // Expand slightly as it fades
-                        fill(255, 255, 255, lightAlpha * (showPlayer ? 1 : 0.5)); // Fade light with blink
-                        noStroke();
-                        // Desenha elipse atrás do jogador
-                        ellipse(0, 0, this.w * lightSizeFactor, this.h * lightSizeFactor);
-                        // reviveLightTimer--; // Decrementa aqui // AJUSTE: Movido para draw() loop principal para não depender do show() ser chamado
-                   }
-
-
-                  if (showPlayer) {
-                      if (this.skinImage) {
-                          imageMode(CENTER);
-                          // Apply squash/stretch to image drawing
-                          image(this.skinImage, 0, 0, this.w, this.h);
-                      } else {
-                          let fillColor = color(255,0,0);
-                          if (this.color && this.color.length >= 3) {
-                               fillColor = color(this.color[0], this.color[1], this.color[2], this.color.length > 3 ? this.color[3] : 255);
-                          }
-                          fill(fillColor);
-                          stroke(0); strokeWeight(2);
-                          // Apply squash/stretch to rect drawing
-                          rect(0, 0, this.w, this.h, this.baseSize * 0.1); // Use baseSize for consistent corner radius
-
-                          fill(0); noStroke(); textAlign(CENTER, CENTER);
-                          // Adjust text size based on width to prevent clipping during squash/stretch
-                          textSize(this.w * 0.4);
-                          text(this.face || '?', 0, this.h * 0.05); // Keep Y offset relative to height
                       }
                   }
-                  pop();
-             }
 
-             reset() {
-                 this.groundLevel = height - groundMargin;
-                 this.baseSize = constrain(height * 0.06, 30, 50);
-                 this.w = this.baseSize;
-                 this.h = this.baseSize;
-                 this.y = this.groundLevel - this.h / 2;
-                 this.velocity = 0;
-                 this.onGround = true; // Começa no chão
-                 // **PULO DUPLO: Reseta pulos**
-                 this.jumpsLeft = 2;
-                 this.angle = 0;
-                 this.rotationSpeed = 0;
-                 this.isFlashing = false;
-                 this.flashTimer = 0;
-                 this.squashFactor = 1.0;
-                 this.targetSquashFactor = 1.0;
-                 this.idleBobTimer = random(TWO_PI);
-
-                  if (playerSkins && playerSkins[selectedSkinKey]) {
-                       this.setAppearance(playerSkins[selectedSkinKey]);
-                  } else {
-                       this.setAppearance({ name: "Erro", rarity: "Comum", color: [255,0,0], face: 'ERR', unlockLevel: 1, loadedImg: null });
+                  // Movement Particles (Trail)
+                  if (!this.onGround && abs(this.velocity) > 1) {
+                      if (frameCount % 4 === 0) {
+                          let px = this.x - (this.w / 3 * (this.velocity > 0 ? -1 : 1));
+                          let py = this.y + this.h / 3;
+                          let vx = random(-0.5, 0.5) - (this.velocity * 0.01);
+                          let vy = random(0.5, 1.5);
+                           playerParticles.push(new PlayerParticle(px, py, vx, vy));
+                      }
                   }
-             }
-         }
 
-         // NOVO: Obstacle Class com tipo 'circle' adicionado
-         class Obstacle {
-             constructor(level) {
-                 this.level = level;
-                 this.groundLevel = height - groundMargin;
+                  // Flash Timer (Invincibility)
+                  if (this.isFlashing) {
+                      this.flashTimer--;
+                      if (this.flashTimer <= 0) {
+                          this.isFlashing = false;
+                      }
+                  }
+              }
 
-                 this.baseSpeed = width * 0.007;
-                 this.speedIncreasePerLevel = width * 0.0005;
-                 this.speed = this.baseSpeed + (this.level * this.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
-                 this.speed = max(this.speed, width * 0.005);
+              // **PULO / PULO DUPLO:** Lógica já implementada corretamente.
+              jump() {
+                  // Permite pular se ainda tiver pulos restantes (do chão ou do ar)
+                  if (this.jumpsLeft > 0) {
+                      let currentJumpForce = this.jumpForce;
+                      // Opcional: Deixar o segundo pulo mais forte/alto?
+                      // if (this.jumpsLeft === 1) { // Se for o segundo pulo (1 restante antes de pular)
+                      //    currentJumpForce *= 1.1; // Ex: 10% mais forte
+                      // }
 
-                 this.x = width + random(50, 150);
+                      this.velocity = currentJumpForce; // Aplica força do pulo
+                      this.onGround = false;           // Definitivamente no ar agora
+                      this.jumpsLeft--;                // Consome um pulo
+                      // console.log("Jump performed. Jumps left:", this.jumpsLeft);
 
-                 let pSize = (player && player.baseSize) ? player.baseSize : constrain(height * 0.06, 30, 50);
-                 this.size = random(pSize * 0.8, pSize * 1.3);
-                 this.blockHeight = random(pSize * 0.8, pSize * 1.5);
+                      // Jump Stretch Effect (pode ajustar)
+                      this.targetSquashFactor = 1.4; // Stretch tall
 
-                 this.verticalSpeed = 0;
-                 this.hitboxPadding = 2;
-
-                 // Define o tipo (spike, block, circle)
-                 this.type = 'spike'; // Default
-                 let typeRoll = random();
-                 if (level >= 2) { // Blocos e Círculos a partir do nível 2
-                     if (typeRoll < 0.4) { // 40% chance Bloco
-                         this.type = 'block';
-                     } else if (typeRoll < 0.7) { // 30% chance Círculo
-                         this.type = 'circle';
-                     } // 30% chance continua Spike (default)
-                 }
-
-                 // Propriedades específicas por tipo
-                 if (this.type === 'block') {
-                     this.color = color(200, 200, 220);
-                     this.size = random(pSize * 1.0, pSize * 1.8); // Largura do bloco
-                     this.y = this.groundLevel - this.blockHeight; // Posição Y inicial
-                     if (level >= 3 && random() < 0.3) { // Chance de Bloco Mover
-                         this.verticalSpeed = random(height * 0.002, height * 0.004) * (random() > 0.5 ? 1 : -1);
-                         this.y = this.groundLevel - this.blockHeight - random(height * 0.05, height * 0.15);
-                     }
-                 } else if (this.type === 'circle') {
-                     this.color = color(50, 200, 50); // Verde para círculo
-                     this.size = random(pSize * 0.7, pSize * 1.2); // Tamanho (diâmetro)
-                     this.y = this.groundLevel - this.size / 2 - random(0, pSize * 0.5); // Posição Y (pode flutuar um pouco acima do chão)
-                     // Poderia adicionar movimento vertical/oscilatório para círculos também
-                     if (level >= 4 && random() < 0.2) {
-                        this.verticalSpeed = random(height * 0.001, height * 0.003) * (random() > 0.5 ? 1 : -1);
-                        this.y = this.groundLevel - this.size / 2 - random(height * 0.05, height * 0.1); // Inicia mais alto se móvel
-                     }
-                 } else { // Spike (default)
-                     this.color = color(255, 50 + random(50), 50 + random(50));
-                     this.y = this.groundLevel; // Base no chão
-                     this.size = random(pSize * 0.9, pSize * 1.4); // Altura do espinho
-                 }
-
-                 // Chance Rara de ser Maior (aplicado após definir tipo)
-                 if (level >= 4 && random() < 0.10) {
-                     if (this.type === 'spike') { this.size *= random(1.3, 1.8); }
-                     else if (this.type === 'block') { this.size *= random(1.2, 1.6); this.blockHeight *= random(1.1, 1.4); }
-                     else if (this.type === 'circle') { this.size *= random(1.2, 1.7); }
-
-                     if (this.type === 'block' && this.verticalSpeed === 0) { // Recalcula Y do bloco estático maior
-                         this.y = this.groundLevel - this.blockHeight;
-                     }
-                      // Poderia ajustar Y para círculo estático maior também se necessário
-                 }
-             }
-
-             update() {
-                 this.x -= this.speed; // Movimento horizontal
-
-                 // Movimento vertical (Blocos e Círculos Móveis)
-                 if (this.verticalSpeed !== 0) {
-                     this.y += this.verticalSpeed;
-                     const topLimit = height * 0.3; // Limite superior geral
-                     let bottomLimit = this.groundLevel - (this.type === 'block' ? this.blockHeight : this.size / 2); // Ajusta limite inferior
-
-                     if (this.y - (this.type === 'circle' ? this.size / 2 : 0) < topLimit || this.y + (this.type === 'block' ? 0 : this.size / 2) > bottomLimit) {
-                         // Correção para não ultrapassar limites
-                         if (this.type === 'block'){
-                            this.y = constrain(this.y, topLimit, bottomLimit);
-                         } else { // Circle
-                             this.y = constrain(this.y, topLimit + this.size / 2, bottomLimit);
-                         }
-                         this.verticalSpeed *= -1; // Inverte direção
-                     }
-                 }
-             }
-
-             show() {
-                 push();
-                 try { fill(this.color); } catch (e) { fill(255,0,0); }
-                 stroke(0);
-                 strokeWeight(1.5);
-
-                 if (this.type === 'spike') {
-                     translate(this.x, this.y);
-                     triangle(-this.size / 2.5, 0, this.size / 2.5, 0, 0, -this.size);
-                 } else if (this.type === 'block') {
-                     rectMode(CORNER);
-                     rect(this.x - this.size / 2, this.y, this.size, this.blockHeight, 3);
-                 } else if (this.type === 'circle') {
-                     ellipseMode(CENTER);
-                     ellipse(this.x, this.y, this.size, this.size); // Desenha círculo
-                 }
-                 pop();
-             }
-
-             offscreen() {
-                 return (this.x + this.size / 2) < 0;
-             }
-
-             hits(player) {
-                 if (!player || player.isInvincible()) return false;
-
-                 let pL = player.x - player.w / 2 + player.hitboxPadding;
-                 let pR = player.x + player.w / 2 - player.hitboxPadding;
-                 let pT = player.y - player.h / 2 + player.hitboxPadding;
-                 let pB = player.y + player.h / 2 - player.hitboxPadding;
-
-                 // Colisão específica por tipo
-                 if (this.type === 'circle') {
-                     // Colisão Círculo-Retângulo (Aproximação: distância entre centros)
-                     let d = dist(this.x, this.y, player.x, player.y);
-                     // Verifica se a distância é menor que raio do círculo + metade da "diagonal" média do player
-                     let playerAvgHalfDiagonal = (player.w + player.h) / 4; // Média da metade da largura/altura
-                     return d < (this.size / 2 - this.hitboxPadding) + (playerAvgHalfDiagonal - player.hitboxPadding);
-                 } else {
-                     // Colisão AABB para Spike e Block
-                     let oL, oR, oT, oB;
-                     if (this.type === 'spike') {
-                         oL = this.x - this.size / 3.5 + this.hitboxPadding;
-                         oR = this.x + this.size / 3.5 - this.hitboxPadding;
-                         oT = this.y - this.size + this.hitboxPadding * 2;
-                         oB = this.y - this.hitboxPadding;
-                     } else { // Block
-                         oL = this.x - this.size / 2 + this.hitboxPadding;
-                         oR = this.x + this.size / 2 - this.hitboxPadding;
-                         oT = this.y + this.hitboxPadding;
-                         oB = this.y + this.blockHeight - this.hitboxPadding;
-                     }
-                     if (pR > oL && pL < oR && pB > oT && pT < oB) {
-                         return true;
-                     }
-                 }
-                 return false;
-             }
-         }
-
-         // AJUSTE: Classe Boss com balanceamento
-         class Boss {
-             constructor(img) {
-                 this.img = img;
-                 this.size = constrain(width * 0.15, 80, 150);
-                 this.x = width + this.size;
-                 this.y = height / 3;
-                 this.speedX = -width * 0.002;
-                 this.speedY = height * 0.003; // Mantida velocidade Y
-                 this.state = 'entering';
-                 this.particles = [];
-                 this.attackCooldown = 0;
-                 this.attackInterval = 90; // AJUSTE: Aumentado intervalo (era 70)
-                 this.particleSpeed = width * 0.0065; // AJUSTE: Diminuída velocidade (era 0.007)
-                 this.hitboxPadding = 10;
-                 this.verticalRange = { top: height * 0.1, bottom: height - groundMargin - this.size * 0.8 };
-                 this.health = BOSS_MAX_HEALTH;
-                 console.log("Boss criado. Imagem:", this.img ? "Carregada" : "Fallback");
-             }
-
-             update(player) {
-                 if (this.health <= 0) return;
-
-                 if (this.state === 'entering') {
-                     this.x += this.speedX;
-                     if (this.x <= width - this.size * 1.2) {
-                         this.x = width - this.size * 1.2;
-                         this.speedX = 0;
-                         this.state = 'attacking';
-                         this.attackCooldown = 60; // Primeiro ataque após entrar
-                         console.log("Boss entrando no estado de ataque.");
-                     }
-                 } else if (this.state === 'attacking') {
-                     // Movimento Vertical
-                     this.y += this.speedY;
-                     if (this.y - this.size/2 < this.verticalRange.top || this.y + this.size/2 > this.verticalRange.bottom) {
-                         this.y = constrain(this.y, this.verticalRange.top + this.size/2, this.verticalRange.bottom - this.size/2);
-                         this.speedY *= -1;
-                     }
-                     // Ataque
-                     this.attackCooldown--;
-                     if (this.attackCooldown <= 0) {
-                         this.attack(player);
-                         this.attackCooldown = this.attackInterval + random(-20, 20); // AJUSTE: Mais variação no cooldown
-                     }
-                 }
-                 // Atualiza partículas
-                  for (let i = this.particles.length - 1; i >= 0; i--) { this.particles[i].update(); }
-             }
-
-             attack(player) {
-                 if (!player) return;
-                 let numParticles = floor(random(1, 4)); // Mantido número de partículas
-                  for (let i = 0; i < numParticles; i++) {
-                     let pX = this.x - this.size / 2;
-                     let pY = this.y + random(-this.size * 0.3, this.size * 0.3);
-
-                     // AJUSTE: Mira menos precisa
-                     let aimErrorX = player.w * random(-0.8, 0.8); // Aumenta erro horizontal
-                     let aimErrorY = player.h * random(-0.8, 0.8); // Aumenta erro vertical
-                     let targetX = player.x + aimErrorX;
-                     let targetY = player.y + aimErrorY;
-                     let angle = atan2(targetY - pY, targetX - pX);
-
-                     // Adiciona leve variação na velocidade do projétil
-                     let speedVariation = random(0.85, 1.15);
-                     let pVX = cos(angle) * this.particleSpeed * speedVariation;
-                     let pVY = sin(angle) * this.particleSpeed * speedVariation;
-
-                     this.particles.push(new Particle(pX, pY, pVX, pVY));
-                 }
-             }
-
-             show() {
-                 if (this.health <= 0) return;
-                 push();
-                 if (this.img && this.img.width > 0) {
-                     imageMode(CENTER);
-                     image(this.img, this.x, this.y, this.size, this.size);
-                 } else {
-                     fill(255, 0, 0, 200); stroke(0); strokeWeight(2);
-                     rectMode(CENTER); rect(this.x, this.y, this.size, this.size);
-                     fill(255); noStroke(); textSize(this.size * 0.3);
-                     textAlign(CENTER, CENTER); text("BOSS", this.x, this.y);
-                 }
-                 pop();
-                 // Show particles (é desenhado no runGameScreen ou showPausedScreen)
-             }
-
-             takeDamage(amount) {
-                 this.health -= amount;
-                 console.log(`Boss tomou ${amount} de dano. Vida restante: ${this.health}`);
-                 // Add damage effect? (flash red?)
-             }
-
-             // Optional body collision
-             // hits(player) { ... }
-         }
-
-         // Boss Projectile Particle
-         class Particle {
-             constructor(x, y, vx, vy) {
-                 this.x = x; this.y = y;
-                 this.vx = vx; this.vy = vy;
-                 this.size = random(10, 18);
-                 this.color = color(random(200, 255), random(50, 150), 0, 220);
-                 this.hitboxPadding = 2; // Reduzido
-             }
-             update() { this.x += this.vx; this.y += this.vy; }
-             show() {
-                 push();
-                 fill(red(this.color), green(this.color), blue(this.color), 100); // Aura
-                 noStroke(); ellipse(this.x, this.y, this.size * 1.5, this.size * 1.5);
-                 fill(this.color); ellipse(this.x, this.y, this.size, this.size); // Núcleo
-                 pop();
-             }
-             offscreen() {
-                 const margin = this.size * 2;
-                 return this.x < -margin || this.x > width + margin || this.y < -margin || this.y > height + margin;
-             }
-             hits(player) {
-                 if (!player || player.isInvincible()) return false; // Ignora colisão se invencível
-                 // Use AABB check for simplicity with player's current dimensions
-                 let pL = player.x - player.w / 2 + player.hitboxPadding;
-                 let pR = player.x + player.w / 2 - player.hitboxPadding;
-                 let pT = player.y - player.h / 2 + player.hitboxPadding;
-                 let pB = player.y + player.h / 2 - player.hitboxPadding;
-
-                 let oL = this.x - this.size / 2 + this.hitboxPadding;
-                 let oR = this.x + this.size / 2 - this.hitboxPadding;
-                 let oT = this.y - this.size / 2 + this.hitboxPadding;
-                 let oB = this.y + this.size / 2 - this.hitboxPadding;
-
-                 if (pR > oL && pL < oR && pB > oT && pT < oB) {
-                     return true;
-                 }
-                 return false;
-             }
-         }
+                      // Jump Particles (mais no segundo pulo?)
+                      let numParticles = (this.jumpsLeft === 1) ? 6 : 8; // 6 no 1º pulo, 8 no 2º
+                      for(let i=0; i < numParticles; i++){
+                          playerParticles.push(new PlayerParticle(this.x, this.y + this.h/2, random(-1.5, 1.5), random(1, 3.5), 40));
+                      }
+                  } else {
+                      // console.log("No jumps left.");
+                  }
+              }
 
 
-         // Player Particle Class
-          class PlayerParticle {
-              constructor(x, y, vx, vy, life = 40, forceColor = null) { // Added forceColor option
-                  this.x = x;
-                  this.y = y;
-                  this.vx = vx + random(-0.3, 0.3);
-                  this.vy = vy + random(-0.3, 0.3);
-                  this.initialLife = life + random(-10, 10);
-                  this.life = max(5, this.initialLife); // Min life
-                  this.size = random(3, 6);
-                  // Use forced color (e.g., for ability) or global player color
-                  this.color = forceColor || playerParticleColor || [255, 255, 255];
+              flash(duration = 15) { // Aceita duração
+                   this.isFlashing = true;
+                   this.flashTimer = duration; // Duration in frames
+              }
+
+              show(forceOpaque = false) {
+                   push();
+                   translate(this.x, this.y);
+                   rotate(this.angle);
+                   rectMode(CENTER); // Important for squash/stretch scaling
+
+                   // Flash Logic (Invincibility)
+                   let showPlayer = true;
+                   if (this.isFlashing && !forceOpaque) {
+                        showPlayer = floor(this.flashTimer / 4) % 2 === 0; // Blink based on timer intervals
+                   }
+
+                   // Efeito de Luz Branca (Reviver) - desenha ATRÁS do jogador
+                    if (reviveLightTimer > 0) {
+                         let lightAlpha = map(reviveLightTimer, 0, 35, 0, 150);
+                         let lightSizeFactor = map(reviveLightTimer, 35, 0, 2.5, 3.5); // Expand slightly as it fades
+                         fill(255, 255, 255, lightAlpha * (showPlayer ? 1 : 0.5)); // Fade light with blink
+                         noStroke();
+                         // Desenha elipse atrás do jogador
+                         ellipse(0, 0, this.w * lightSizeFactor, this.h * lightSizeFactor);
+                         // reviveLightTimer--; // Decrementado no draw() principal
+                    }
+
+
+                   if (showPlayer) {
+                       if (this.skinImage) {
+                           imageMode(CENTER);
+                           // Apply squash/stretch to image drawing
+                           image(this.skinImage, 0, 0, this.w, this.h);
+                       } else {
+                           let fillColor = color(255,0,0);
+                           if (this.color && this.color.length >= 3) {
+                                fillColor = color(this.color[0], this.color[1], this.color[2], this.color.length > 3 ? this.color[3] : 255);
+                           }
+                           fill(fillColor);
+                           stroke(0); strokeWeight(2);
+                           // Apply squash/stretch to rect drawing
+                           rect(0, 0, this.w, this.h, this.baseSize * 0.1); // Use baseSize for consistent corner radius
+
+                           fill(0); noStroke(); textAlign(CENTER, CENTER);
+                           // Adjust text size based on width to prevent clipping during squash/stretch
+                           textSize(this.w * 0.4);
+                           text(this.face || '?', 0, this.h * 0.05); // Keep Y offset relative to height
+                       }
+                   }
+                   pop();
+              }
+
+              reset() {
+                  this.groundLevel = height - groundMargin;
+                  this.baseSize = constrain(height * 0.06, 30, 50);
+                  this.w = this.baseSize;
+                  this.h = this.baseSize;
+                  this.y = this.groundLevel - this.h / 2;
+                  this.velocity = 0;
+                  this.onGround = true; // Começa no chão
+                  // **PULO DUPLO: Reseta pulos**
+                  this.jumpsLeft = 2;
+                  this.angle = 0;
+                  this.rotationSpeed = 0;
+                  this.isFlashing = false;
+                  this.flashTimer = 0;
+                  this.squashFactor = 1.0;
+                  this.targetSquashFactor = 1.0;
+                  this.idleBobTimer = random(TWO_PI);
+
+                   if (playerSkins && playerSkins[selectedSkinKey]) {
+                        this.setAppearance(playerSkins[selectedSkinKey]);
+                   } else {
+                        this.setAppearance({ name: "Erro", rarity: "Comum", color: [255,0,0], face: 'ERR', unlockLevel: 1, loadedImg: null });
+                   }
+              }
+          }
+
+          // NOVO: Obstacle Class com tipo 'circle' adicionado
+          class Obstacle {
+              constructor(level) {
+                  this.level = level;
+                  this.groundLevel = height - groundMargin;
+
+                  this.baseSpeed = width * 0.007;
+                  this.speedIncreasePerLevel = width * 0.0005;
+                  this.speed = this.baseSpeed + (this.level * this.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
+                  this.speed = max(this.speed, width * 0.005);
+
+                  this.x = width + random(50, 150);
+
+                  let pSize = (player && player.baseSize) ? player.baseSize : constrain(height * 0.06, 30, 50);
+                  this.size = random(pSize * 0.8, pSize * 1.3);
+                  this.blockHeight = random(pSize * 0.8, pSize * 1.5);
+
+                  this.verticalSpeed = 0;
+                  this.hitboxPadding = 2;
+
+                  // Define o tipo (spike, block, circle)
+                  this.type = 'spike'; // Default
+                  let typeRoll = random();
+                  if (level >= 2) { // Blocos e Círculos a partir do nível 2
+                      if (typeRoll < 0.4) { // 40% chance Bloco
+                          this.type = 'block';
+                      } else if (typeRoll < 0.7) { // 30% chance Círculo
+                          this.type = 'circle';
+                      } // 30% chance continua Spike (default)
+                  }
+
+                  // Propriedades específicas por tipo
+                  if (this.type === 'block') {
+                      this.color = color(200, 200, 220);
+                      this.size = random(pSize * 1.0, pSize * 1.8); // Largura do bloco
+                      this.y = this.groundLevel - this.blockHeight; // Posição Y inicial
+                      if (level >= 3 && random() < 0.3) { // Chance de Bloco Mover
+                          this.verticalSpeed = random(height * 0.002, height * 0.004) * (random() > 0.5 ? 1 : -1);
+                          this.y = this.groundLevel - this.blockHeight - random(height * 0.05, height * 0.15);
+                      }
+                  } else if (this.type === 'circle') {
+                      this.color = color(50, 200, 50); // Verde para círculo
+                      this.size = random(pSize * 0.7, pSize * 1.2); // Tamanho (diâmetro)
+                      this.y = this.groundLevel - this.size / 2 - random(0, pSize * 0.5); // Posição Y (pode flutuar um pouco acima do chão)
+                      // Poderia adicionar movimento vertical/oscilatório para círculos também
+                      if (level >= 4 && random() < 0.2) {
+                         this.verticalSpeed = random(height * 0.001, height * 0.003) * (random() > 0.5 ? 1 : -1);
+                         this.y = this.groundLevel - this.size / 2 - random(height * 0.05, height * 0.1); // Inicia mais alto se móvel
+                      }
+                  } else { // Spike (default)
+                      this.color = color(255, 50 + random(50), 50 + random(50));
+                      this.y = this.groundLevel; // Base no chão
+                      this.size = random(pSize * 0.9, pSize * 1.4); // Altura do espinho
+                  }
+
+                  // Chance Rara de ser Maior (aplicado após definir tipo)
+                  if (level >= 4 && random() < 0.10) {
+                      if (this.type === 'spike') { this.size *= random(1.3, 1.8); }
+                      else if (this.type === 'block') { this.size *= random(1.2, 1.6); this.blockHeight *= random(1.1, 1.4); }
+                      else if (this.type === 'circle') { this.size *= random(1.2, 1.7); }
+
+                      if (this.type === 'block' && this.verticalSpeed === 0) { // Recalcula Y do bloco estático maior
+                           this.y = this.groundLevel - this.blockHeight;
+                      }
+                       // Poderia ajustar Y para círculo estático maior também se necessário
+                  }
               }
 
               update() {
-                  this.x += this.vx;
-                  this.y += this.vy;
-                  this.vy += 0.05; // Gravity
-                  this.vx *= 0.98; // Friction/drag
-                  this.life--;
+                  this.x -= this.speed; // Movimento horizontal
+
+                  // Movimento vertical (Blocos e Círculos Móveis)
+                  if (this.verticalSpeed !== 0) {
+                      this.y += this.verticalSpeed;
+                      const topLimit = height * 0.3; // Limite superior geral
+                      let bottomLimit = this.groundLevel - (this.type === 'block' ? this.blockHeight : this.size / 2); // Ajusta limite inferior
+
+                      if (this.y - (this.type === 'circle' ? this.size / 2 : 0) < topLimit || this.y + (this.type === 'block' ? 0 : this.size / 2) > bottomLimit) {
+                          // Correção para não ultrapassar limites
+                          if (this.type === 'block'){
+                             this.y = constrain(this.y, topLimit, bottomLimit);
+                          } else { // Circle
+                               this.y = constrain(this.y, topLimit + this.size / 2, bottomLimit);
+                          }
+                          this.verticalSpeed *= -1; // Inverte direção
+                      }
+                  }
               }
 
               show() {
                   push();
-                  let alpha = map(this.life, 0, this.initialLife, 0, 200);
-                  fill(this.color[0], this.color[1], this.color[2], alpha);
-                  noStroke();
-                  ellipse(this.x, this.y, this.size * (this.life / this.initialLife)); // Shrink
+                  try { fill(this.color); } catch (e) { fill(255,0,0); }
+                  stroke(0);
+                  strokeWeight(1.5);
+
+                  if (this.type === 'spike') {
+                      translate(this.x, this.y);
+                      triangle(-this.size / 2.5, 0, this.size / 2.5, 0, 0, -this.size);
+                  } else if (this.type === 'block') {
+                      rectMode(CORNER);
+                      rect(this.x - this.size / 2, this.y, this.size, this.blockHeight, 3);
+                  } else if (this.type === 'circle') {
+                      ellipseMode(CENTER);
+                      ellipse(this.x, this.y, this.size, this.size); // Desenha círculo
+                  }
                   pop();
               }
 
-              isFinished() {
-                  return this.life <= 0;
+              offscreen() {
+                  return (this.x + this.size / 2) < 0;
               }
-         }
+
+              hits(player) {
+                  if (!player || player.isInvincible()) return false;
+
+                  let pL = player.x - player.w / 2 + player.hitboxPadding;
+                  let pR = player.x + player.w / 2 - player.hitboxPadding;
+                  let pT = player.y - player.h / 2 + player.hitboxPadding;
+                  let pB = player.y + player.h / 2 - player.hitboxPadding;
+
+                  // Colisão específica por tipo
+                  if (this.type === 'circle') {
+                      // Colisão Círculo-Retângulo (Aproximação: distância entre centros)
+                      let d = dist(this.x, this.y, player.x, player.y);
+                      // Verifica se a distância é menor que raio do círculo + metade da "diagonal" média do player
+                      let playerAvgHalfDiagonal = (player.w + player.h) / 4; // Média da metade da largura/altura
+                      return d < (this.size / 2 - this.hitboxPadding) + (playerAvgHalfDiagonal - player.hitboxPadding);
+                  } else {
+                      // Colisão AABB para Spike e Block
+                      let oL, oR, oT, oB;
+                      if (this.type === 'spike') {
+                          oL = this.x - this.size / 3.5 + this.hitboxPadding;
+                          oR = this.x + this.size / 3.5 - this.hitboxPadding;
+                          oT = this.y - this.size + this.hitboxPadding * 2;
+                          oB = this.y - this.hitboxPadding;
+                      } else { // Block
+                          oL = this.x - this.size / 2 + this.hitboxPadding;
+                          oR = this.x + this.size / 2 - this.hitboxPadding;
+                          oT = this.y + this.hitboxPadding;
+                          oB = this.y + this.blockHeight - this.hitboxPadding;
+                      }
+                      if (pR > oL && pL < oR && pB > oT && pT < oB) {
+                          return true;
+                      }
+                  }
+                  return false;
+              }
+          }
+
+          // AJUSTE: Classe Boss com balanceamento
+          class Boss {
+              constructor(img) {
+                  this.img = img;
+                  this.size = constrain(width * 0.15, 80, 150);
+                  this.x = width + this.size;
+                  this.y = height / 3;
+                  this.speedX = -width * 0.002;
+                  this.speedY = height * 0.003; // Mantida velocidade Y
+                  this.state = 'entering';
+                  this.particles = [];
+                  this.attackCooldown = 0;
+                  this.attackInterval = 90; // AJUSTE: Aumentado intervalo (era 70)
+                  this.particleSpeed = width * 0.0065; // AJUSTE: Diminuída velocidade (era 0.007)
+                  this.hitboxPadding = 10;
+                  this.verticalRange = { top: height * 0.1, bottom: height - groundMargin - this.size * 0.8 };
+                  this.health = BOSS_MAX_HEALTH;
+                  console.log("Boss criado. Imagem:", this.img ? "Carregada" : "Fallback");
+              }
+
+              update(player) {
+                  if (this.health <= 0) return;
+
+                  if (this.state === 'entering') {
+                      this.x += this.speedX;
+                      if (this.x <= width - this.size * 1.2) {
+                          this.x = width - this.size * 1.2;
+                          this.speedX = 0;
+                          this.state = 'attacking';
+                          this.attackCooldown = 60; // Primeiro ataque após entrar
+                          console.log("Boss entrando no estado de ataque.");
+                      }
+                  } else if (this.state === 'attacking') {
+                      // Movimento Vertical
+                      this.y += this.speedY;
+                      if (this.y - this.size/2 < this.verticalRange.top || this.y + this.size/2 > this.verticalRange.bottom) {
+                          this.y = constrain(this.y, this.verticalRange.top + this.size/2, this.verticalRange.bottom - this.size/2);
+                          this.speedY *= -1;
+                      }
+                      // Ataque
+                      this.attackCooldown--;
+                      if (this.attackCooldown <= 0) {
+                          this.attack(player);
+                          this.attackCooldown = this.attackInterval + random(-20, 20); // AJUSTE: Mais variação no cooldown
+                      }
+                  }
+                  // Atualiza partículas/objetos
+                   for (let i = this.particles.length - 1; i >= 0; i--) { this.particles[i].update(); }
+              }
+
+              attack(player) {
+                  if (!player) return;
+                  let numParticles = floor(random(1, 4)); // Mantido número de partículas/objetos
+                   for (let i = 0; i < numParticles; i++) {
+                      let pX = this.x - this.size / 2;
+                      let pY = this.y + random(-this.size * 0.3, this.size * 0.3);
+
+                      // AJUSTE: Mira menos precisa
+                      let aimErrorX = player.w * random(-0.8, 0.8); // Aumenta erro horizontal
+                      let aimErrorY = player.h * random(-0.8, 0.8); // Aumenta erro vertical
+                      let targetX = player.x + aimErrorX;
+                      let targetY = player.y + aimErrorY;
+                      let angle = atan2(targetY - pY, targetX - pX);
+
+                      // Adiciona leve variação na velocidade do projétil
+                      let speedVariation = random(0.85, 1.15);
+                      let pVX = cos(angle) * this.particleSpeed * speedVariation;
+                      let pVY = sin(angle) * this.particleSpeed * speedVariation;
+
+                      this.particles.push(new Particle(pX, pY, pVX, pVY));
+                  }
+              }
+
+              show() {
+                  if (this.health <= 0) return;
+                  push();
+                  if (this.img && this.img.width > 0) {
+                      imageMode(CENTER);
+                      image(this.img, this.x, this.y, this.size, this.size);
+                  } else {
+                      fill(255, 0, 0, 200); stroke(0); strokeWeight(2);
+                      rectMode(CENTER); rect(this.x, this.y, this.size, this.size);
+                      fill(255); noStroke(); textSize(this.size * 0.3);
+                      textAlign(CENTER, CENTER); text("BOSS", this.x, this.y);
+                  }
+                  pop();
+                  // Show particles/objetos é feito no loop principal (draw)
+              }
+
+              takeDamage(amount) {
+                  this.health -= amount;
+                  console.log(`Boss tomou ${amount} de dano. Vida restante: ${this.health}`);
+                  // Add damage effect? (flash red?)
+              }
+
+              // Optional body collision
+              // hits(player) { ... }
+          }
+
+          // *** Boss Projectile Particle - AGORA OBJETO (QUADRADO) ***
+          class Particle {
+              constructor(x, y, vx, vy) {
+                  this.x = x; this.y = y;
+                  this.vx = vx; this.vy = vy;
+                  this.size = random(12, 20); // Tamanho do objeto
+                  this.color = color(random(200, 255), random(50, 150), 0, 220); // Mantém cor laranja/vermelha
+                  this.hitboxPadding = 3; // Padding da hitbox
+                  this.angle = random(TWO_PI); // Ângulo inicial para rotação
+                  this.rotationSpeed = random(-0.05, 0.05); // Velocidade de rotação
+              }
+              update() {
+                  this.x += this.vx;
+                  this.y += this.vy;
+                  this.angle += this.rotationSpeed;
+              }
+              show() {
+                  push();
+                  translate(this.x, this.y);
+                  rotate(this.angle);
+                  rectMode(CENTER); // Para desenhar a partir do centro
+
+                  // Aura suave (opcional)
+                  noStroke();
+                  fill(red(this.color), green(this.color), blue(this.color), 80); // Aura mais suave
+                  rect(0, 0, this.size * 1.5, this.size * 1.5, 3); // Aura quadrada com cantos arredondados
+
+                  // Objeto principal (quadrado)
+                  stroke(0); // Contorno preto
+                  strokeWeight(1.5);
+                  fill(this.color);
+                  rect(0, 0, this.size, this.size, 2); // Quadrado com cantos levemente arredondados
+
+                  pop();
+              }
+              offscreen() {
+                  const margin = this.size * 2;
+                  return this.x < -margin || this.x > width + margin || this.y < -margin || this.y > height + margin;
+              }
+              hits(player) {
+                  if (!player || player.isInvincible()) return false; // Ignora colisão se invencível
+                  // Use AABB check for simplicity with player's current dimensions
+                  let pL = player.x - player.w / 2 + player.hitboxPadding;
+                  let pR = player.x + player.w / 2 - player.hitboxPadding;
+                  let pT = player.y - player.h / 2 + player.hitboxPadding;
+                  let pB = player.y + player.h / 2 - player.hitboxPadding;
+
+                  // AABB do objeto (considerando que ele não rotaciona para a hitbox)
+                  let oL = this.x - this.size / 2 + this.hitboxPadding;
+                  let oR = this.x + this.size / 2 - this.hitboxPadding;
+                  let oT = this.y - this.size / 2 + this.hitboxPadding;
+                  let oB = this.y + this.size / 2 - this.hitboxPadding;
+
+                  if (pR > oL && pL < oR && pB > oT && pT < oB) {
+                      return true;
+                  }
+                  return false;
+              }
+          }
 
 
-         // --- Funções de Janela ---
-         function windowResized() {
-             console.log("windowResized: Redimensionando...");
-             resizeCanvas(windowWidth, windowHeight);
-             console.log(`windowResized: Canvas redimensionado para ${width}x${height}`);
+          // Player Particle Class
+           class PlayerParticle {
+               constructor(x, y, vx, vy, life = 40, forceColor = null) { // Added forceColor option
+                   this.x = x;
+                   this.y = y;
+                   this.vx = vx + random(-0.3, 0.3);
+                   this.vy = vy + random(-0.3, 0.3);
+                   this.initialLife = life + random(-10, 10);
+                   this.life = max(5, this.initialLife); // Min life
+                   this.size = random(3, 6);
+                   // Use forced color (e.g., for ability) or global player color
+                   this.color = forceColor || playerParticleColor || [255, 255, 255];
+               }
+
+               update() {
+                   this.x += this.vx;
+                   this.y += this.vy;
+                   this.vy += 0.05; // Gravity
+                   this.vx *= 0.98; // Friction/drag
+                   this.life--;
+               }
+
+               show() {
+                   push();
+                   let alpha = map(this.life, 0, this.initialLife, 0, 200);
+                   fill(this.color[0], this.color[1], this.color[2], alpha);
+                   noStroke();
+                   ellipse(this.x, this.y, this.size * (this.life / this.initialLife)); // Shrink
+                   pop();
+               }
+
+               isFinished() {
+                   return this.life <= 0;
+               }
+          }
+
+
+          // --- Funções de Janela ---
+          function windowResized() {
+              console.log("windowResized: Redimensionando...");
+              resizeCanvas(windowWidth, windowHeight);
+              console.log(`windowResized: Canvas redimensionado para ${width}x${height}`);
 
               // **CHÃO MAIS ALTO:** Recalcula margem no resize
-              groundMargin = constrain(windowHeight * 0.15, 80, 150); // Era 0.1, 60, 100
-             console.log(`windowResized: Nova margem chão: ${groundMargin}`);
+               groundMargin = constrain(windowHeight * 0.15, 80, 150); // Era 0.1, 60, 100
+              console.log(`windowResized: Nova margem chão: ${groundMargin}`);
 
-             createStars();
+              createStars();
 
-              if (player) {
-                  // Reset calls recalculations internally now
-                  player.reset();
-                  // Ensure position is correct after reset if groundMargin changed significantly
-                  player.y = player.groundLevel - player.h / 2;
-                  console.log("Player reset on resize.");
-              }
+               if (player) {
+                   // Reset calls recalculations internally now
+                   player.reset();
+                   // Ensure position is correct after reset if groundMargin changed significantly
+                   player.y = player.groundLevel - player.h / 2;
+                   console.log("Player reset on resize.");
+               }
 
-              // Atualiza obstáculos existentes (velocidade, posição relativa ao chão)
-             obstacles.forEach(obs => {
-                  obs.groundLevel = height - groundMargin;
-                  if (obs.type === 'spike') {
-                      obs.y = obs.groundLevel;
-                  } else if (obs.type === 'block' && obs.verticalSpeed === 0) { // Ajusta blocos estáticos
-                      obs.y = obs.groundLevel - obs.blockHeight;
-                  } else if (obs.type === 'circle' && obs.verticalSpeed === 0) { // Ajusta círculos estáticos (se flutuarem)
-                     // obs.y = obs.groundLevel - obs.size / 2 - ... (ajustar se necessário)
-                  }
-                  // Recalcula velocidade baseada na largura
-                  obs.baseSpeed = width * 0.007;
-                  obs.speedIncreasePerLevel = width * 0.0005;
-                  obs.speed = obs.baseSpeed + (obs.level * obs.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
-                  obs.speed = max(obs.speed, width * 0.005);
-             });
-
-
-              if (boss) {
-                   boss.size = constrain(width * 0.15, 80, 150);
-                   if (boss.state === 'attacking') boss.x = width - boss.size * 1.2;
-                   boss.verticalRange = { top: height * 0.1, bottom: height - groundMargin - boss.size * 0.8 };
-                   boss.y = constrain(boss.y, boss.verticalRange.top + boss.size/2, boss.verticalRange.bottom - boss.size/2);
-                   boss.speedY = height * 0.003;
-                   boss.particleSpeed = width * 0.0065; // AJUSTE: Recalcular velocidade da partícula no resize
-                   console.log("Boss properties recalculated on resize.");
-              }
-
-              // Garante visibilidade correta dos elementos HTML conforme o estado atual
-              // Apenas reaplica estado se não estiver carregando
-             if (gameState !== 'loading') {
-                  // Precisa forçar redesenho dos botões p5 adequados ao estado atual
-                  changeState(gameState);
-             }
-
-              // Fecha menus que podem ficar mal posicionados
-              if (skinContainer && skinContainer.style.display === 'flex') {
-                  toggleSkinSelect(); // Usa a função toggle para fechar corretamente
-              }
-              if (particleColorSelector && particleColorSelector.style.display === 'flex') {
-                  particleColorSelector.style.display = 'none';
-                  // Re-show if in menu state
-                  if(gameState === 'menu') particleColorSelector.style.display = 'flex';
-              }
+               // Atualiza obstáculos existentes (velocidade, posição relativa ao chão)
+              obstacles.forEach(obs => {
+                   obs.groundLevel = height - groundMargin;
+                   if (obs.type === 'spike') {
+                       obs.y = obs.groundLevel;
+                   } else if (obs.type === 'block' && obs.verticalSpeed === 0) { // Ajusta blocos estáticos
+                       obs.y = obs.groundLevel - obs.blockHeight;
+                   } else if (obs.type === 'circle' && obs.verticalSpeed === 0) { // Ajusta círculos estáticos (se flutuarem)
+                      // obs.y = obs.groundLevel - obs.size / 2 - ... (ajustar se necessário)
+                   }
+                   // Recalcula velocidade baseada na largura
+                   obs.baseSpeed = width * 0.007;
+                   obs.speedIncreasePerLevel = width * 0.0005;
+                   obs.speed = obs.baseSpeed + (obs.level * obs.speedIncreasePerLevel) + random(-width*0.0005, width*0.0008);
+                   obs.speed = max(obs.speed, width * 0.005);
+              });
 
 
-             console.log("windowResized: Processamento completo.");
-         }
+               if (boss) {
+                    boss.size = constrain(width * 0.15, 80, 150);
+                    if (boss.state === 'attacking') boss.x = width - boss.size * 1.2;
+                    boss.verticalRange = { top: height * 0.1, bottom: height - groundMargin - boss.size * 0.8 };
+                    boss.y = constrain(boss.y, boss.verticalRange.top + boss.size/2, boss.verticalRange.bottom - boss.size/2);
+                    boss.speedY = height * 0.003;
+                    boss.particleSpeed = width * 0.0065; // AJUSTE: Recalcular velocidade da partícula no resize
+                    console.log("Boss properties recalculated on resize.");
+               }
+
+               // Garante visibilidade correta dos elementos HTML conforme o estado atual
+               // Apenas reaplica estado se não estiver carregando
+               if (gameState !== 'loading') {
+                   // Precisa forçar redesenho dos botões p5 adequados ao estado atual
+                   changeState(gameState); // Reaplicar o estado atual força a reconfiguração da UI
+               }
+
+               // Fecha menus que podem ficar mal posicionados
+               if (skinContainer && skinContainer.style.display === 'flex') {
+                    toggleSkinSelect(); // Usa a função toggle para fechar corretamente
+               }
+               if (particleColorSelector && particleColorSelector.style.display === 'flex') {
+                    particleColorSelector.style.display = 'none';
+                    // Re-show if in menu state
+                    if(gameState === 'menu') particleColorSelector.style.display = 'flex';
+               }
+
+
+              console.log("windowResized: Processamento completo.");
+          }
 
     </script>
 </body>
